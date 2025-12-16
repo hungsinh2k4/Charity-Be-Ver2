@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { VerificationStatus } from '../../../common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 
 export type OrganizationDocument = Organization & Document;
@@ -42,14 +41,6 @@ export class Organization {
     @ApiProperty({ description: 'Creator user ID' })
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
     creatorId: Types.ObjectId;
-
-    @ApiProperty({ enum: VerificationStatus, description: 'Verification status' })
-    @Prop({ type: String, enum: VerificationStatus, default: VerificationStatus.PENDING })
-    verificationStatus: VerificationStatus;
-
-    @ApiProperty({ description: 'Date when organization was verified', required: false })
-    @Prop()
-    verifiedAt?: Date;
 
     @ApiProperty({ description: 'Soft delete flag' })
     @Prop({ default: false })

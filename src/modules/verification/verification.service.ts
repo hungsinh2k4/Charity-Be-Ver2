@@ -5,7 +5,6 @@ import { VerificationRequest, VerificationRequestDocument } from './schemas/veri
 import { CreateVerificationRequestDto, ProcessVerificationDto } from './dto';
 import { EntityType, RequestStatus, VerificationStatus } from '../../common/enums';
 import { UsersService } from '../users/users.service';
-import { OrganizationsService } from '../organizations/organizations.service';
 import { CampaignsService } from '../campaigns/campaigns.service';
 
 @Injectable()
@@ -13,7 +12,6 @@ export class VerificationService {
     constructor(
         @InjectModel(VerificationRequest.name) private verificationModel: Model<VerificationRequestDocument>,
         private usersService: UsersService,
-        private organizationsService: OrganizationsService,
         private campaignsService: CampaignsService,
     ) { }
 
@@ -95,13 +93,6 @@ export class VerificationService {
                 await this.usersService.updateVerificationStatus(
                     request.entityId.toString(),
                     verificationStatus,
-                );
-                break;
-            case EntityType.ORGANIZATION:
-                await this.organizationsService.updateVerificationStatus(
-                    request.entityId.toString(),
-                    verificationStatus,
-                    adminId,
                 );
                 break;
             case EntityType.CAMPAIGN:

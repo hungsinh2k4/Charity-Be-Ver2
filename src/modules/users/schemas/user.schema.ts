@@ -30,6 +30,14 @@ export class User {
     @Prop()
     verifiedAt?: Date;
 
+    @ApiProperty({ description: 'User phone number', example: '0123456789' })
+    @Prop()
+    phone?: string;
+
+    @ApiProperty({ description: 'User address', example: 'Hà Nội' })
+    @Prop()
+    address?: string;
+
     @ApiProperty({ description: 'Creation timestamp' })
     createdAt?: Date;
 

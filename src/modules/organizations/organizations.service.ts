@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Organization, OrganizationDocument } from './schemas/organization.schema';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
-import { VerificationStatus } from '../../common/enums';
 import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
@@ -81,26 +80,6 @@ export class OrganizationsService {
         return organization.save();
     }
 
-    async updateVerificationStatus(
-        id: string,
-        status: VerificationStatus,
-        adminId: string,
-    ): Promise<OrganizationDocument> {
-        const organization = await this.findById(id);
-        organization.verificationStatus = status;
-        if (status === VerificationStatus.VERIFIED) {
-            organization.verifiedAt = new Date();
-            // Update blockchain
-            if (organization.blockchainId) {
-                try {
-                    await this.blockchainService.verifyOrganization(organization.blockchainId, adminId);
-                } catch (error) {
-                    console.error('Blockchain verification update failed:', error);
-                }
-            }
-        }
-        return organization.save();
-    }
 
     async getAuditTrail(id: string) {
         const organization = await this.findById(id);

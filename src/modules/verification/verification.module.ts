@@ -4,14 +4,12 @@ import { VerificationController } from './verification.controller';
 import { VerificationService } from './verification.service';
 import { VerificationRequest, VerificationRequestSchema } from './schemas/verification-request.schema';
 import { UsersModule } from '../users/users.module';
-import { OrganizationsModule } from '../organizations/organizations.module';
 import { CampaignsModule } from '../campaigns/campaigns.module';
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: VerificationRequest.name, schema: VerificationRequestSchema }]),
         forwardRef(() => UsersModule),
-        forwardRef(() => OrganizationsModule),
         forwardRef(() => CampaignsModule),
     ],
     controllers: [VerificationController],

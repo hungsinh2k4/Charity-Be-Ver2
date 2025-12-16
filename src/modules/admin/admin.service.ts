@@ -36,7 +36,6 @@ export class AdminService {
             donations: donationStats,
             organizations: {
                 total: allOrganizations.length,
-                verified: allOrganizations.filter(o => o.verificationStatus === 'VERIFIED').length,
             },
             campaigns: {
                 total: allCampaigns.length,
