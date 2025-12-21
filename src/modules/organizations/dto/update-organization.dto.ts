@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsArray } from 'class-validator';
 
 export class UpdateOrganizationDto {
     @ApiProperty({
@@ -55,4 +55,13 @@ export class UpdateOrganizationDto {
     @IsString()
     @IsOptional()
     address?: string;
+
+    @ApiProperty({
+        description: 'Legal documents URLs for verification (business license, registration certificate, etc.)',
+        example: ['https://storage.example.com/docs/license.pdf', 'https://storage.example.com/docs/certificate.jpg'],
+        required: false
+    })
+    @IsArray()
+    @IsOptional()
+    legalDocuments?: string[];
 }

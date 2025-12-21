@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsEmail, IsUrl } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEmail, IsUrl, IsArray } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateOrganizationDto {
@@ -65,4 +65,13 @@ export class CreateOrganizationDto {
     @IsString()
     @IsOptional()
     address?: string;
+
+    @ApiProperty({
+        description: 'Legal documents URLs for verification (business license, registration certificate, etc.)',
+        example: ['https://storage.example.com/docs/license.pdf', 'https://storage.example.com/docs/certificate.jpg'],
+        required: false
+    })
+    @IsArray()
+    @IsOptional()
+    legalDocuments?: string[];
 }

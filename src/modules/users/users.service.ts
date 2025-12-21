@@ -8,7 +8,7 @@ import { Role, VerificationStatus } from '../../common/enums';
 export class UsersService {
     constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
-    async create(userData: { email: string; passwordHash: string; name: string }) {
+    async create(userData: { email: string; passwordHash: string; name: string; phone?: string; address?: string }) {
         const user = new this.userModel(userData);
         return user.save();
     }

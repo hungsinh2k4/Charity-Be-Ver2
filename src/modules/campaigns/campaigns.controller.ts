@@ -12,7 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { CampaignsService } from './campaigns.service';
 import { CreateCampaignDto, UpdateCampaignDto } from './dto';
-import { JwtAuthGuard } from '../auth/guards';
+import { JwtAuthGuard, VerifiedUserGuard } from '../auth/guards';
 import { CurrentUser } from '../auth/decorators';
 import { VerificationStatus } from '../../common/enums';
 
@@ -22,11 +22,11 @@ export class CampaignsController {
     constructor(private campaignsService: CampaignsService) { }
 
     @Post()
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, VerifiedUserGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Create a new campaign (organization creator only)' })
+    @ApiOperation({ summary: 'Create a new campaign (requires verified user)' })
     @ApiResponse({ status: 201, description: 'Campaign created successfully' })
-    @ApiResponse({ status: 403, description: 'Not authorized to create campaign for this organization' })
+    @ApiResponse({ status: 403, description: 'User must be verified to create campaign' })
     async create(@Body() createDto: CreateCampaignDto, @CurrentUser() user: any) {
         return this.campaignsService.create(createDto, user.userId);
     }

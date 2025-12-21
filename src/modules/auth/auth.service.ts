@@ -31,6 +31,8 @@ export class AuthService {
             email: registerDto.email,
             passwordHash,
             name: registerDto.name,
+            phone: registerDto.phone,
+            address: registerDto.address,
         });
 
         return this.generateTokenResponse(user);

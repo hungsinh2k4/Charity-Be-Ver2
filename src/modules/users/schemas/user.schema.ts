@@ -22,8 +22,8 @@ export class User {
     @Prop({ type: String, enum: Role, default: Role.USER })
     role: Role;
 
-    @ApiProperty({ enum: VerificationStatus, description: 'Verification status', example: VerificationStatus.PENDING })
-    @Prop({ type: String, enum: VerificationStatus, default: VerificationStatus.PENDING })
+    @ApiProperty({ enum: VerificationStatus, description: 'Verification status', example: VerificationStatus.UNVERIFIED })
+    @Prop({ type: String, enum: VerificationStatus, default: VerificationStatus.UNVERIFIED })
     verificationStatus: VerificationStatus;
 
     @ApiProperty({ description: 'Date when user was verified', required: false })

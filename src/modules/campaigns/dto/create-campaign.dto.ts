@@ -63,12 +63,13 @@ export class CreateCampaignDto {
     currency?: string;
 
     @ApiProperty({
-        description: 'Organization ID managing this campaign',
-        example: '676a1b2c3d4e5f6a7b8c9d0e'
+        description: 'Organization ID managing this campaign (optional - only for organization members)',
+        example: '676a1b2c3d4e5f6a7b8c9d0e',
+        required: false
     })
     @IsString()
-    @IsNotEmpty()
-    organizationId: string;
+    @IsOptional()
+    organizationId?: string;
 
     @ApiProperty({
         description: 'Campaign start date (ISO 8601 format)',

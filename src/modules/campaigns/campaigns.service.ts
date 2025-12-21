@@ -16,15 +16,20 @@ export class CampaignsService {
     ) { }
 
     async create(createDto: CreateCampaignDto, creatorId: string): Promise<CampaignDocument> {
-        // Verify organization exists and user is the creator
-        const organization = await this.organizationsService.findById(createDto.organizationId);
-        if (organization.creatorId.toString() !== creatorId) {
-            throw new ForbiddenException('Only organization creator can create campaigns');
+        let organizationBlockchainId: string | undefined;
+
+        // If organizationId is provided, verify user is the organization creator
+        if (createDto.organizationId) {
+            const organization = await this.organizationsService.findById(createDto.organizationId);
+            if (organization.userId.toString() !== creatorId) {
+                throw new ForbiddenException('Only organization creator can create campaigns for this organization');
+            }
+            organizationBlockchainId = organization.blockchainId;
         }
 
         const campaign = new this.campaignModel({
             ...createDto,
-            organizationId: new Types.ObjectId(createDto.organizationId),
+            organizationId: createDto.organizationId ? new Types.ObjectId(createDto.organizationId) : undefined,
             creatorId: new Types.ObjectId(creatorId),
             startDate: createDto.startDate ? new Date(createDto.startDate) : undefined,
             endDate: createDto.endDate ? new Date(createDto.endDate) : undefined,
@@ -32,11 +37,11 @@ export class CampaignsService {
         const saved = await campaign.save();
 
         // Record on blockchain (only if organization has been recorded on blockchain)
-        if (organization.blockchainId) {
+        if (organizationBlockchainId) {
             try {
                 const blockchainId = await this.blockchainService.createCampaign({
                     mongoId: saved._id.toString(),
-                    organizationId: organization.blockchainId,
+                    organizationId: organizationBlockchainId,
                     title: saved.title,
                     goalAmount: saved.goalAmount,
                 });

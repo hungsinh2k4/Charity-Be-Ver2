@@ -41,7 +41,7 @@ export class OrganizationsController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Get organizations created by current user' })
     async findMyOrganizations(@CurrentUser() user: any) {
-        return this.organizationsService.findByCreator(user.userId);
+        return this.organizationsService.findByUser(user.userId);
     }
 
     @Get(':id')
@@ -74,6 +74,17 @@ export class OrganizationsController {
     @ApiResponse({ status: 403, description: 'Not authorized to delete this organization' })
     async remove(@Param('id') id: string, @CurrentUser() user: any) {
         return this.organizationsService.softDelete(id, user.userId);
+    }
+
+    @Post(':id/request-verification')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Request verification for organization (requires legal documents to be uploaded first)' })
+    @ApiResponse({ status: 200, description: 'Verification request submitted successfully' })
+    @ApiResponse({ status: 400, description: 'Legal documents are required or verification already pending/completed' })
+    @ApiResponse({ status: 403, description: 'Not authorized - only organization owner can request verification' })
+    async requestVerification(@Param('id') id: string, @CurrentUser() user: any) {
+        return this.organizationsService.requestVerification(id, user.userId);
     }
 
     @Get(':id/audit')

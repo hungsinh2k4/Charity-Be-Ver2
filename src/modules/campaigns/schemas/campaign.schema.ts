@@ -39,9 +39,9 @@ export class Campaign {
     @Prop({ default: 'USD' })
     currency: string;
 
-    @ApiProperty({ description: 'Organization ID' })
-    @Prop({ type: Types.ObjectId, ref: 'Organization', required: true })
-    organizationId: Types.ObjectId;
+    @ApiProperty({ description: 'Organization ID (optional for individual creators)', required: false })
+    @Prop({ type: Types.ObjectId, ref: 'Organization', required: false })
+    organizationId?: Types.ObjectId;
 
     @ApiProperty({ description: 'Campaign creator user ID' })
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })

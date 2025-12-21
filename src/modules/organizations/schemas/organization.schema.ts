@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
+import { VerificationStatus } from '../../../common/enums';
 
 export type OrganizationDocument = Organization & Document;
 
@@ -38,9 +39,13 @@ export class Organization {
     @Prop()
     address?: string;
 
-    @ApiProperty({ description: 'Creator user ID' })
-    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-    creatorId: Types.ObjectId;
+    @ApiProperty({ description: 'Legal documents for verification (business license, registration certificate, etc.)', required: false })
+    @Prop({ type: [String], default: [] })
+    legalDocuments: string[];
+
+    @ApiProperty({ description: 'Verification status of the organization', enum: VerificationStatus })
+    @Prop({ type: String, enum: VerificationStatus, default: VerificationStatus.UNVERIFIED })
+    verificationStatus: VerificationStatus;
 
     @ApiProperty({ description: 'Soft delete flag' })
     @Prop({ default: false })

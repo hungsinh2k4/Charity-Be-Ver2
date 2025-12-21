@@ -12,4 +12,14 @@ export class UpdateUserDto {
     @MinLength(6)
     @IsOptional()
     password?: string;
+
+    @ApiProperty({ description: 'User phone number', example: '0123456789', required: false })
+    @IsString()
+    @IsOptional()
+    phone?: string;
+
+    @ApiProperty({ description: 'User address', example: 'Hà Nội', required: false })
+    @IsString()
+    @IsOptional()
+    address?: string;
 }
