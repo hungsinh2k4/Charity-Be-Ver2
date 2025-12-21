@@ -30,6 +30,18 @@ export class User {
     @Prop()
     verifiedAt?: Date;
 
+    @ApiProperty({ description: 'Identity document URL (CCCD/Passport)', required: false })
+    @Prop()
+    identityDocument?: string;
+
+    @ApiProperty({ description: 'Selfie photo URL holding identity document', required: false })
+    @Prop()
+    selfieWithDocument?: string;
+
+    @ApiProperty({ description: 'Additional verification note from user', required: false })
+    @Prop()
+    verificationNote?: string;
+
     @ApiProperty({ description: 'User phone number', example: '0123456789' })
     @Prop()
     phone?: string;

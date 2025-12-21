@@ -11,8 +11,9 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
-import { JwtAuthGuard, VerifiedUserGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import { JwtAuthGuard, VerifiedUserGuard, RolesGuard } from '../auth/guards';
+import { CurrentUser, Roles } from '../auth/decorators';
+import { Role, VerificationStatus } from '../../common/enums';
 
 @ApiTags('Organizations')
 @Controller('organizations')
@@ -42,6 +43,16 @@ export class OrganizationsController {
     @ApiOperation({ summary: 'Get organizations created by current user' })
     async findMyOrganizations(@CurrentUser() user: any) {
         return this.organizationsService.findByUser(user.userId);
+    }
+
+    @Get('pending-verifications')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: '[Auditor] Get all organizations with pending verification' })
+    @ApiResponse({ status: 200, description: 'Returns list of organizations pending verification' })
+    async getPendingVerifications() {
+        return this.organizationsService.findPendingVerifications();
     }
 
     @Get(':id')
@@ -85,6 +96,20 @@ export class OrganizationsController {
     @ApiResponse({ status: 403, description: 'Not authorized - only organization owner can request verification' })
     async requestVerification(@Param('id') id: string, @CurrentUser() user: any) {
         return this.organizationsService.requestVerification(id, user.userId);
+    }
+
+    @Patch(':id/verification-status')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: '[Auditor] Approve or reject organization verification' })
+    @ApiResponse({ status: 200, description: 'Verification status updated' })
+    async updateVerificationStatus(
+        @Param('id') id: string,
+        @Body('status') status: VerificationStatus,
+        @CurrentUser() user: any,
+    ) {
+        return this.organizationsService.updateVerificationStatus(id, status, user.userId);
     }
 
     @Get(':id/audit')

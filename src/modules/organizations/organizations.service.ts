@@ -140,5 +140,15 @@ export class OrganizationsService {
         }
         return this.blockchainService.getOrganizationHistory(organization.blockchainId);
     }
+
+    /**
+     * Get all organizations with pending verification (for auditor)
+     */
+    async findPendingVerifications(): Promise<OrganizationDocument[]> {
+        return this.organizationModel
+            .find({ verificationStatus: VerificationStatus.PENDING, isDeleted: false })
+            .populate('userId', 'name email')
+            .exec();
+    }
 }
 

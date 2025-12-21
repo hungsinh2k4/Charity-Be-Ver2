@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role, VerificationStatus } from '../../common/enums';
+import { RequestUserVerificationDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -52,4 +53,61 @@ export class UsersService {
             .select('-passwordHash')
             .exec();
     }
+
+    /**
+     * Request verification for a user
+     * Requires identity document and selfie with document
+     */
+    async requestVerification(
+        userId: string,
+        dto: RequestUserVerificationDto,
+    ): Promise<UserDocument | null> {
+        const user = await this.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        // Check if already verified or pending
+        if (user.verificationStatus === VerificationStatus.VERIFIED) {
+            throw new BadRequestException('User is already verified');
+        }
+        if (user.verificationStatus === VerificationStatus.PENDING) {
+            throw new BadRequestException('Verification request is already pending');
+        }
+
+        return this.userModel
+            .findByIdAndUpdate(
+                userId,
+                {
+                    identityDocument: dto.identityDocument,
+                    selfieWithDocument: dto.selfieWithDocument,
+                    verificationNote: dto.verificationNote,
+                    verificationStatus: VerificationStatus.PENDING,
+                },
+                { new: true },
+            )
+            .select('-passwordHash')
+            .exec();
+    }
+
+    /**
+     * Get all users with pending verification (for auditor)
+     */
+    async findPendingVerifications(): Promise<UserDocument[]> {
+        return this.userModel
+            .find({ verificationStatus: VerificationStatus.PENDING })
+            .select('-passwordHash')
+            .exec();
+    }
+
+    /**
+     * Get user verification details by ID (for auditor)
+     */
+    async getVerificationDetails(userId: string): Promise<UserDocument | null> {
+        return this.userModel
+            .findById(userId)
+            .select('_id email name identityDocument selfieWithDocument verificationNote verificationStatus createdAt')
+            .exec();
+    }
 }
+
