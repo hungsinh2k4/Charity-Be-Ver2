@@ -24,7 +24,9 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/charity',
+        uri:
+          configService.get<string>('MONGODB_URI') ||
+          'mongodb://localhost:27017/charity',
       }),
       inject: [ConfigService],
     }),
@@ -40,4 +42,4 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     AdminModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

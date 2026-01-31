@@ -7,13 +7,15 @@ import { CampaignsModule } from '../campaigns/campaigns.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: Donation.name, schema: DonationSchema }]),
-        CampaignsModule,
-        BlockchainModule,
-    ],
-    controllers: [DonationsController],
-    providers: [DonationsService],
-    exports: [DonationsService],
+  imports: [
+    MongooseModule.forFeature([
+      { name: Donation.name, schema: DonationSchema },
+    ]),
+    CampaignsModule,
+    BlockchainModule,
+  ],
+  controllers: [DonationsController],
+  providers: [DonationsService],
+  exports: [DonationsService],
 })
-export class DonationsModule { }
+export class DonationsModule {}

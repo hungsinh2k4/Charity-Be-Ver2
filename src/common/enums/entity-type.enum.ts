@@ -1,4 +1,4 @@
 export enum EntityType {
-    USER = 'USER',
-    CAMPAIGN = 'CAMPAIGN',
+  USER = 'USER',
+  CAMPAIGN = 'CAMPAIGN',
 }

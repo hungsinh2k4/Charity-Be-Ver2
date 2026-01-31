@@ -9,15 +9,15 @@ import { VerificationModule } from '../verification/verification.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 
 @Module({
-    imports: [
-        UsersModule,
-        OrganizationsModule,
-        CampaignsModule,
-        DonationsModule,
-        VerificationModule,
-        BlockchainModule,
-    ],
-    controllers: [AdminController],
-    providers: [AdminService],
+  imports: [
+    UsersModule,
+    OrganizationsModule,
+    CampaignsModule,
+    DonationsModule,
+    VerificationModule,
+    BlockchainModule,
+  ],
+  controllers: [AdminController],
+  providers: [AdminService],
 })
-export class AdminModule { }
+export class AdminModule {}
