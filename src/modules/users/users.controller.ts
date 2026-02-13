@@ -17,7 +17,8 @@ import { UsersService } from './users.service';
 import { UpdateUserDto, RequestUserVerificationDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
-import { Role } from '../../common/enums';
+import { Role, VerificationStatus } from '../../common/enums';
+import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Users')
 @Controller('users')
@@ -29,7 +30,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Returns current user profile' })
-  async getProfile(@CurrentUser() user: any) {
+  async getProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findById(user.userId);
   }
 
@@ -39,7 +40,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   async updateProfile(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() updateDto: UpdateUserDto,
   ) {
     return this.usersService.updateProfile(user.userId, updateDto);
@@ -60,7 +61,7 @@ export class UsersController {
     description: 'Already verified or verification already pending',
   })
   async requestVerification(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: RequestUserVerificationDto,
   ) {
     return this.usersService.requestVerification(user.userId, dto);
@@ -106,8 +107,8 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Verification status updated' })
   async updateVerificationStatus(
     @Param('id') id: string,
-    @Body('status') status: string,
+    @Body('status') status: VerificationStatus,
   ) {
-    return this.usersService.updateVerificationStatus(id, status as any);
+    return this.usersService.updateVerificationStatus(id, status);
   }
 }

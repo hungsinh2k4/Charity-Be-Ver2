@@ -75,7 +75,12 @@ export class CampaignsService {
     verificationStatus?: VerificationStatus;
     isActive?: boolean;
   }): Promise<CampaignDocument[]> {
-    const query: any = { isDeleted: false };
+    const query: {
+      isDeleted: boolean;
+      organizationId?: Types.ObjectId;
+      verificationStatus?: VerificationStatus;
+      isActive?: boolean;
+    } = { isDeleted: false };
     if (filters?.organizationId) {
       query.organizationId = new Types.ObjectId(filters.organizationId);
     }

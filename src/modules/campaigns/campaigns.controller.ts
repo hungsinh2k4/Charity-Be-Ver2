@@ -21,6 +21,7 @@ import { CreateCampaignDto, UpdateCampaignDto } from './dto';
 import { JwtAuthGuard, VerifiedUserGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { VerificationStatus, Role } from '../../common/enums';
+import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Campaigns')
 @Controller('campaigns')
@@ -36,7 +37,10 @@ export class CampaignsController {
     status: 403,
     description: 'User must be verified to create campaign',
   })
-  async create(@Body() createDto: CreateCampaignDto, @CurrentUser() user: any) {
+  async create(
+    @Body() createDto: CreateCampaignDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.campaignsService.create(createDto, user.userId);
   }
 
@@ -71,7 +75,7 @@ export class CampaignsController {
     status: 200,
     description: 'Returns list of campaigns created by current user',
   })
-  async findMyCampaigns(@CurrentUser() user: any) {
+  async findMyCampaigns(@CurrentUser() user: AuthenticatedUser) {
     return this.campaignsService.findByCreator(user.userId);
   }
 
@@ -95,7 +99,7 @@ export class CampaignsController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateCampaignDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.campaignsService.update(id, updateDto, user.userId);
   }
@@ -105,7 +109,10 @@ export class CampaignsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete campaign (soft delete, creator only)' })
   @ApiResponse({ status: 200, description: 'Campaign deleted successfully' })
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.campaignsService.softDelete(id, user.userId);
   }
 
@@ -140,7 +147,7 @@ export class CampaignsController {
   async updateVerificationStatus(
     @Param('id') id: string,
     @Body('status') status: VerificationStatus,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.campaignsService.updateVerificationStatus(
       id,

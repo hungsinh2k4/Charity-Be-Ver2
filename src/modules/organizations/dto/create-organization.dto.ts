@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsEmail,
-  IsUrl,
-  IsArray,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateOrganizationDto {

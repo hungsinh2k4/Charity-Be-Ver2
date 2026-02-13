@@ -43,7 +43,10 @@ export class UsersService {
     userId: string,
     status: VerificationStatus,
   ): Promise<UserDocument | null> {
-    const updateData: any = { verificationStatus: status };
+    const updateData: {
+      verificationStatus: VerificationStatus;
+      verifiedAt?: Date;
+    } = { verificationStatus: status };
     if (status === VerificationStatus.VERIFIED) {
       updateData.verifiedAt = new Date();
     }

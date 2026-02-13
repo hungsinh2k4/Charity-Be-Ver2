@@ -19,6 +19,7 @@ import { CreateVerificationRequestDto, ProcessVerificationDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles, CurrentUser } from '../auth/decorators';
 import { Role, RequestStatus } from '../../common/enums';
+import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Verification')
 @Controller('verification')
@@ -33,7 +34,7 @@ export class VerificationController {
   @ApiResponse({ status: 400, description: 'Pending request already exists' })
   async createRequest(
     @Body() createDto: CreateVerificationRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.verificationService.create(createDto, user.userId);
   }
@@ -77,7 +78,7 @@ export class VerificationController {
   async processRequest(
     @Param('id') id: string,
     @Body() processDto: ProcessVerificationDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.verificationService.processRequest(id, processDto, user.userId);
   }

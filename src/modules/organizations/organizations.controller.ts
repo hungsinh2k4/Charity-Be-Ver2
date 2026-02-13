@@ -19,6 +19,7 @@ import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 import { JwtAuthGuard, VerifiedUserGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { Role, VerificationStatus } from '../../common/enums';
+import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Organizations')
 @Controller('organizations')
@@ -38,7 +39,7 @@ export class OrganizationsController {
   @ApiResponse({ status: 403, description: 'User must be verified' })
   async create(
     @Body() createDto: CreateOrganizationDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.organizationsService.create(createDto, user.userId);
   }
@@ -54,7 +55,7 @@ export class OrganizationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get organizations created by current user' })
-  async findMyOrganizations(@CurrentUser() user: any) {
+  async findMyOrganizations(@CurrentUser() user: AuthenticatedUser) {
     return this.organizationsService.findByUser(user.userId);
   }
 
@@ -96,7 +97,7 @@ export class OrganizationsController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateOrganizationDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.organizationsService.update(id, updateDto, user.userId);
   }
@@ -113,7 +114,10 @@ export class OrganizationsController {
     status: 403,
     description: 'Not authorized to delete this organization',
   })
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.organizationsService.softDelete(id, user.userId);
   }
 
@@ -138,7 +142,10 @@ export class OrganizationsController {
     description:
       'Not authorized - only organization owner can request verification',
   })
-  async requestVerification(@Param('id') id: string, @CurrentUser() user: any) {
+  async requestVerification(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.organizationsService.requestVerification(id, user.userId);
   }
 
@@ -153,7 +160,7 @@ export class OrganizationsController {
   async updateVerificationStatus(
     @Param('id') id: string,
     @Body('status') status: VerificationStatus,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.organizationsService.updateVerificationStatus(
       id,

@@ -23,7 +23,7 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     // Database
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri:
           configService.get<string>('MONGODB_URI') ||
           'mongodb://localhost:27017/charity',

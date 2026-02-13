@@ -109,7 +109,7 @@ export class DonationsService {
   }
 
   async getStats(campaignId?: string) {
-    const match: any = {};
+    const match: { campaignId?: Types.ObjectId } = {};
     if (campaignId) {
       match.campaignId = new Types.ObjectId(campaignId);
     }
