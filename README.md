@@ -147,6 +147,74 @@ Log thành công:
 
 ---
 
+## 🐳 Chạy bằng Docker (với Hyperledger Fabric)
+
+Docker container kết nối tới Fabric network chạy trong WSL2 thông qua `host.docker.internal`.
+
+### Bước 1 — Chuẩn bị (WSL2)
+
+```bash
+cd ~/Charity-Be-ver2
+
+# Đảm bảo Fabric đang chạy và chaincode đã deploy
+# Sau đó chạy script chuẩn bị:
+./scripts/prepare-docker-fabric.sh
+```
+
+Script sẽ tự động:
+- Tạo `fabric/connection-docker.json` (`localhost` → `host.docker.internal`)
+- Kiểm tra wallet đã có `admin.id` và `appUser.id`
+
+> Nếu wallet chưa có: `rm -rf wallet/ && node src/modules/blockchain/fabric/wallet-setup.js`
+
+### Bước 2 — Build và chạy Docker (Windows)
+
+```bash
+docker compose down
+docker compose build
+docker compose up -d
+
+# Xem logs
+docker compose logs backend -f
+```
+
+Log thành công:
+```
+✅ Hyperledger Fabric gateway initialized | channel: mychannel | chaincode: charity-chaincode
+Blockchain mode:   production
+```
+
+### Cách hoạt động
+
+```
+Docker container
+    → peer0.org1.example.com:7051   (extra_hosts → host-gateway)
+    → peer0.org2.example.com:9051   (extra_hosts → host-gateway)
+    → orderer.example.com:7050      (extra_hosts → host-gateway)
+         ↓ (Windows host)
+    → WSL2 port forwarding
+    → Fabric network containers
+```
+
+Docker `extra_hosts` map tất cả Fabric hostnames về Windows host (→ WSL2), không cần thay đổi TLS certificates.
+
+### Các lệnh Docker thường dùng
+
+```bash
+docker compose up -d              # Chạy ngầm
+docker compose down               # Dừng
+docker compose down -v            # Dừng + xóa MongoDB data
+docker compose logs backend -f    # Xem backend logs
+docker compose logs mongodb -f    # Xem MongoDB logs
+docker compose exec backend sh    # Vào shell container
+docker compose exec mongodb mongosh charity  # Vào MongoDB shell
+docker compose build --no-cache   # Rebuild image (sau khi sửa code)
+```
+
+> **Port conflict:** Không chạy đồng thời `npm run start:dev` và `docker compose up` — cả hai dùng port 8080.
+
+---
+
 ## Quy trình Restart Fabric Network
 
 Mỗi lần cần reset hoàn toàn:
