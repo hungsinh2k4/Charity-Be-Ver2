@@ -1,0 +1,28 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+
+# Wallet (sensitive - mount từ host thay vì bake vào image)
+wallet/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test
+coverage/
+test/
+
+# Dev tools
+.vscode/
+.idea/
+*.swp
+
+# WSL / OS
+.DS_Store
+Thumbs.db

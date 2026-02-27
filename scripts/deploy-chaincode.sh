@@ -17,7 +17,7 @@ CHAINCODE_NAME="charity-chaincode"
 CHAINCODE_PATH="$(pwd)/chaincode/charity"
 CHANNEL_NAME="mychannel"
 CHAINCODE_VERSION="1.1"
-CHAINCODE_SEQUENCE="2"
+CHAINCODE_SEQUENCE="1"
 
 # Đường dẫn đến fabric-samples/test-network
 # Thay đổi theo đường dẫn trên máy của bạn
@@ -88,7 +88,8 @@ export CORE_PEER_TLS_ROOTCERT_FILE="$TEST_NETWORK_PATH/organizations/peerOrganiz
 export CORE_PEER_MSPCONFIGPATH="$TEST_NETWORK_PATH/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp"
 export CORE_PEER_ADDRESS="localhost:9051"
 
-peer lifecycle chaincode install "${CHAINCODE_NAME}.tar.gz"
+peer lifecycle chaincode install "${CHAINCODE_NAME}.tar.gz" 2>&1 | \
+  grep -v "already successfully installed" || true
 
 # ─── APPROVE - Org2 ──────────────────────────────────────────────────────────
 echo "✅ Approving chaincode từ Org2..."

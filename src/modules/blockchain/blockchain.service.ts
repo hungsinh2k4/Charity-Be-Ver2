@@ -126,10 +126,12 @@ export class BlockchainService implements OnModuleInit, OnModuleDestroy {
 
       // Khởi tạo Gateway
       this.gateway = new Gateway();
+      // asLocalhost=true cho local dev (localhost), false cho Docker (host.docker.internal)
+      const asLocalhost = process.env.FABRIC_AS_LOCALHOST !== 'false';
       await this.gateway.connect(ccp, {
         wallet,
         identity: userId,
-        discovery: { enabled: true, asLocalhost: true },
+        discovery: { enabled: true, asLocalhost },
       });
 
       // Lấy contract

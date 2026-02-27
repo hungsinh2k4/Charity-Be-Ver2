@@ -136,16 +136,28 @@ async function main() {
             } catch (regErr) {
                 if (regErr.message && regErr.message.includes('already registered')) {
                     // Đã registered → reset secret qua IdentityService
-                    console.log(`[AppUser] Đã registered, đang reset enrollment secret...`);
+                    console.log(`[AppUser] Đã registered, đang reset secret...`);
                     const NEW_SECRET = 'appUserReset1';
                     const identityService = ca.newIdentityService();
-                    await identityService.update(
-                        APP_USER,
-                        { enrollmentSecret: NEW_SECRET },
-                        adminUser,
-                    );
-                    enrollSecret = NEW_SECRET;
-                    console.log(`[AppUser] Reset secret thành công`);
+                    let updateResult;
+                    try {
+                        updateResult = await identityService.update(
+                            APP_USER,
+                            {
+                                enrollmentSecret: NEW_SECRET,
+                                type: 'client',
+                                affiliation: 'org1.department1',
+                                maxEnrollments: -1,
+                            },
+                            adminUser,
+                        );
+                    } catch (updateErr) {
+                        console.error(`[AppUser] identityService.update failed: ${updateErr.message}`);
+                        throw updateErr;
+                    }
+                    // Dùng secret từ response nếu có, fallback NEW_SECRET
+                    enrollSecret = (updateResult && updateResult.secret) ? updateResult.secret : NEW_SECRET;
+                    console.log(`[AppUser] Reset secret thành công, sử dụng secret: '${enrollSecret}'`);
                 } else {
                     throw regErr;
                 }
