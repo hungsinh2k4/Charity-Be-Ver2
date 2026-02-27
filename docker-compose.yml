@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # ─── MongoDB ────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: charity-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: charity
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - charity-network
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── Backend API ─────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: charity-backend
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      # MongoDB
+      MONGODB_URI: mongodb://mongodb:27017/charity
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-secret-key}
+
+      # Server
+      PORT: 8080
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+
+      # Fabric production mode - dùng connection-docker.json (host.docker.internal)
+      # Chạy scripts/prepare-docker-fabric.sh trước khi docker compose up
+      BLOCKCHAIN_MODE: production
+
+      # Fabric config (connection-docker.json dùng host.docker.internal thay localhost)
+      FABRIC_CHANNEL_NAME: ${FABRIC_CHANNEL_NAME:-mychannel}
+      FABRIC_CHAINCODE_NAME: ${FABRIC_CHAINCODE_NAME:-charity-chaincode}
+      FABRIC_WALLET_PATH: /app/wallet
+      FABRIC_CONNECTION_PROFILE: /app/fabric/connection-docker.json
+      FABRIC_USER_ID: ${FABRIC_USER_ID:-appUser}
+      FABRIC_MSP_ID: ${FABRIC_MSP_ID:-Org1MSP}
+      FABRIC_CA_NAME: ${FABRIC_CA_NAME:-ca.org1.example.com}
+      FABRIC_ADMIN_USER: ${FABRIC_ADMIN_USER:-admin}
+      FABRIC_ADMIN_PASS: ${FABRIC_ADMIN_PASS:-adminpw}
+      # false = dùng host.docker.internal thay vì localhost khi trong Docker
+      FABRIC_AS_LOCALHOST: "false"
+
+    volumes:
+      - ./wallet:/app/wallet:ro
+      - ./fabric:/app/fabric:ro
+
+    # Map tất cả Fabric hostnames về host machine (WSL2)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "peer0.org1.example.com:host-gateway"
+      - "peer0.org2.example.com:host-gateway"
+      - "orderer.example.com:host-gateway"
+      - "ca.org1.example.com:host-gateway"
+      - "ca.org2.example.com:host-gateway"
+
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+    networks:
+      - charity-network
+
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  charity-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

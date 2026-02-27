@@ -68,8 +68,15 @@ Authorization: Bearer <your-jwt-token>
     },
   });
 
+  // Health check endpoint (dùng cho Docker healthcheck)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (_req: any, res: any) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
+
 
   console.log(`
 ╔═══════════════════════════════════════════════════════════╗

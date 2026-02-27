@@ -14,9 +14,9 @@ export class DonationsService {
     @InjectModel(Donation.name) private donationModel: Model<DonationDocument>,
     private campaignsService: CampaignsService,
     private blockchainService: BlockchainService,
-  ) {}
+  ) { }
 
-  async create(createDto: CreateDonationDto): Promise<DonationDocument> {
+  async create(createDto: CreateDonationDto, userId?: string): Promise<DonationDocument> {
     // Verify campaign exists
     const campaign = await this.campaignsService.findById(createDto.campaignId);
     if (!campaign.isActive) {
@@ -38,6 +38,8 @@ export class DonationsService {
       organizationId: campaign.organizationId,
       donorName: createDto.donorName || 'Anonymous',
       isAnonymous: createDto.isAnonymous !== false,
+      // Liên kết với tài khoản nếu user đang đăng nhập
+      ...(userId ? { userId: new Types.ObjectId(userId) } : {}),
     });
 
     const saved = await donation.save();
@@ -88,6 +90,14 @@ export class DonationsService {
   ): Promise<DonationDocument[]> {
     return this.donationModel
       .find({ organizationId: new Types.ObjectId(organizationId) })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findByUser(userId: string): Promise<DonationDocument[]> {
+    return this.donationModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .populate('campaignId', 'title goalAmount currentAmount')
       .sort({ createdAt: -1 })
       .exec();
   }

@@ -1,5 +1,5 @@
 {
-  "name": "Charity-Be-ver2",
+  "name": "charity-be-ver2",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -19,7 +19,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:db": "ts-node -r tsconfig-paths/register scripts/seed.ts",
-    "seed:clear": "ts-node -r tsconfig-paths/register scripts/seed.ts"
+    "seed:clear": "ts-node -r tsconfig-paths/register scripts/seed.ts",
+    "blockchain:setup": "node src/modules/blockchain/fabric/wallet-setup.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -33,6 +34,7 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "fabric-ca-client": "^2.2.20",
     "fabric-network": "^2.2.20",
     "mongoose": "^9.0.1",
     "passport": "^0.7.0",
@@ -41,7 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -56,6 +58,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",
+    "@types/uuid": "^8.3.4",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "eslint": "^9.18.0",
