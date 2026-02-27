@@ -1,0 +1,78 @@
+{
+  "name": "charity-network",
+  "version": "1.0.0",
+  "client": {
+    "organization": "Org1",
+    "connection": {
+      "timeout": {
+        "peer": {
+          "endorser": "300"
+        },
+        "orderer": "300"
+      }
+    }
+  },
+  "organizations": {
+    "Org1": {
+      "mspid": "Org1MSP",
+      "peers": [
+        "peer0.org1.example.com"
+      ],
+      "certificateAuthorities": [
+        "ca.org1.example.com"
+      ]
+    }
+  },
+  "peers": {
+    "peer0.org1.example.com": {
+      "url": "grpcs://localhost:7051",
+      "tlsCACerts": {
+        "pem": "-----BEGIN CERTIFICATE-----\nMIICJjCCAc2gAwIBAgIUfbcWi/n2nHNWe4IVsPRMN72R1gEwCgYIKoZIzj0EAwIw\ncDELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9saW5hMQ8wDQYDVQQH\nEwZEdXJoYW0xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh\nLm9yZzEuZXhhbXBsZS5jb20wHhcNMjYwMjIzMTQxOTAwWhcNNDEwMjE5MTQxOTAw\nWjBwMQswCQYDVQQGEwJVUzEXMBUGA1UECBMOTm9ydGggQ2Fyb2xpbmExDzANBgNV\nBAcTBkR1cmhhbTEZMBcGA1UEChMQb3JnMS5leGFtcGxlLmNvbTEcMBoGA1UEAxMT\nY2Eub3JnMS5leGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJXk\nVAAqb42myL3NIGVR/Lbm29P4m49M1ex55b5djqREQLn0Bg3eFkogVHBl9i0mPldb\nZR6arKQo9R/ngcf4ciujRTBDMA4GA1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAG\nAQH/AgEBMB0GA1UdDgQWBBR299yYoty1HNdO2uOjGeARxof+yDAKBggqhkjOPQQD\nAgNHADBEAiAouIztOU6CQdEnvkmf9McBl6xxYqBfkcIfOSfeJDVi2wIgHwyfqKd5\nzKj+gnlmgOTxsszBd5A8s7Un4QFOQGKcRaM=\n-----END CERTIFICATE-----\n"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.org1.example.com",
+        "hostnameOverride": "peer0.org1.example.com"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca.org1.example.com": {
+      "url": "https://localhost:7054",
+      "caName": "ca-org1",
+      "tlsCACerts": {
+        "pem": [
+          "-----BEGIN CERTIFICATE-----\nMIICgzCCAiqgAwIBAgIUfBvkeVqxuYPPExfS4c3Y/doegIQwCgYIKoZIzj0EAwIw\ncDELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9saW5hMQ8wDQYDVQQH\nEwZEdXJoYW0xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh\nLm9yZzEuZXhhbXBsZS5jb20wHhcNMjYwMjIzMTQxOTAwWhcNMjcwMjIzMTQxOTAw\nWjBpMQswCQYDVQQGEwJVUzEXMBUGA1UECBMOTm9ydGggQ2Fyb2xpbmExDzANBgNV\nBAcTBkR1cmhhbTEZMBcGA1UEChMQb3JnMS5leGFtcGxlLmNvbTEVMBMGA1UEAxMM\nOTM5OTAxZWU5YWVmMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEI74FOPAd3eyl\nQhhFqXzFpbHsZcxkve6Y/uugQcp2w9vBCgUWDr1odAxf024d/YN8rM4LLqS6RJgA\nY7OVK0FNhqOBqDCBpTAOBgNVHQ8BAf8EBAMCA6gwHQYDVR0lBBYwFAYIKwYBBQUH\nAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFIuubGaq2HoqGl5w\nIvdVifygJOSeMB8GA1UdIwQYMBaAFHb33Jii3LUc107a46MZ4BHGh/7IMCYGA1Ud\nEQQfMB2CCWxvY2FsaG9zdIIQb3JnMS5leGFtcGxlLmNvbTAKBggqhkjOPQQDAgNH\nADBEAiBk04efaCrRC+aZgCAGpXDTcNNmnZ3phO9UAWRp25C0sQIgaiXP6VO/lg4r\niVZqPNnFugcNU+H7t4OaKO25jSzTqgs=\n-----END CERTIFICATE-----\n"
+        ]
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  },
+  "channels": {
+    "mychannel": {
+      "orderers": [
+        "orderer.example.com"
+      ],
+      "peers": {
+        "peer0.org1.example.com": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        }
+      }
+    }
+  },
+  "orderers": {
+    "orderer.example.com": {
+      "url": "grpcs://localhost:7050",
+      "tlsCACerts": {
+        "pem": "-----BEGIN CERTIFICATE-----\nMIICCzCCAbGgAwIBAgIUSanaLTtqCuJmjAcYgYBPyYOzlowwCgYIKoZIzj0EAwIw\nYjELMAkGA1UEBhMCVVMxETAPBgNVBAgTCE5ldyBZb3JrMREwDwYDVQQHEwhOZXcg\nWW9yazEUMBIGA1UEChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1wbGUu\nY29tMB4XDTI2MDIyMzE0MTkwMFoXDTQxMDIxOTE0MTkwMFowYjELMAkGA1UEBhMC\nVVMxETAPBgNVBAgTCE5ldyBZb3JrMREwDwYDVQQHEwhOZXcgWW9yazEUMBIGA1UE\nChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1wbGUuY29tMFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEjZE4cbDeR7E0RR40pdEunbzkEKNZShQN5DDp/QAY\nhEfMkRo/yl53al6B3UN1MnqaLMG9TsyZXXNvl+lgJdaOFaNFMEMwDgYDVR0PAQH/\nBAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8CAQEwHQYDVR0OBBYEFOyWVNwc8qpyxWrc\nxDC3GQ/m0/k6MAoGCCqGSM49BAMCA0gAMEUCIQDKWwS3757F6j5LnUJgj5SHpGCd\now6hKp5Wzcbdmr2sugIgIb8ykewGMLmhdeh9W0PEiU5SUmJ3nKb5e58LMyiYVGQ=\n-----END CERTIFICATE-----\n"
+      },
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer.example.com"
+      }
+    }
+  }
+}
