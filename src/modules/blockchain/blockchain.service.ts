@@ -94,20 +94,25 @@ export class BlockchainService implements OnModuleInit, OnModuleDestroy {
         'appUser',
       );
 
-      // Load connection profile
-      const resolvedProfile = path.resolve(connectionProfilePath);
+      // Load connection profile - hỗ trợ cả relative path lẫn UNC path (\\wsl.localhost\...)
+      const resolvedProfile = connectionProfilePath.startsWith('\\\\')
+        ? connectionProfilePath  // UNC path - dùng nguyên
+        : path.resolve(connectionProfilePath);  // relative path - resolve
+
       if (!fs.existsSync(resolvedProfile)) {
         throw new Error(
           `Connection profile không tồn tại: ${resolvedProfile}\n` +
-          `Hãy cập nhật fabric/connection-profile.json với thông tin mạng Fabric của bạn.\n` +
-          `Sau đó chạy: npx ts-node src/modules/blockchain/fabric/wallet-helper.ts`,
+          `Nếu dùng Fabric test-network, hãy chạy:\n` +
+          `  cd ~/fabric-samples/test-network && ./network.sh up createChannel -c mychannel -ca`,
         );
       }
 
       const ccp = JSON.parse(fs.readFileSync(resolvedProfile, 'utf8'));
 
-      // Load wallet
-      const resolvedWallet = path.resolve(walletPath);
+      // Load wallet - hỗ trợ cả relative path lẫn UNC path
+      const resolvedWallet = walletPath.startsWith('\\\\')
+        ? walletPath
+        : path.resolve(walletPath);
       const wallet = await Wallets.newFileSystemWallet(resolvedWallet);
 
       // Kiểm tra identity tồn tại

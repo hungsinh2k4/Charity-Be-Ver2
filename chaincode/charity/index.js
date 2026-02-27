@@ -15,6 +15,12 @@ class CharityContract extends Contract {
         super('CharityContract');
     }
 
+    // Helper: Lấy timestamp deterministic từ Fabric transaction
+    _getTxTimestamp(ctx) {
+        const ts = ctx.stub.getTxTimestamp();
+        return new Date(ts.seconds.low * 1000).toISOString();
+    }
+
     // ─────────────────────────────────────────────
     // ORGANIZATION OPERATIONS
     // ─────────────────────────────────────────────
@@ -34,7 +40,7 @@ class CharityContract extends Contract {
         }
 
         asset.docType = 'organization';
-        asset.createdAt = new Date().toISOString();
+        asset.createdAt = this._getTxTimestamp(ctx); // ✅ deterministic
 
         await ctx.stub.putState(
             this._orgKey(asset.id),
@@ -62,7 +68,7 @@ class CharityContract extends Contract {
 
         const asset = JSON.parse(data.toString());
         asset.verificationStatus = 'VERIFIED';
-        asset.verifiedAt = new Date().toISOString();
+        asset.verifiedAt = this._getTxTimestamp(ctx); // ✅ deterministic
         asset.verifiedBy = adminId;
 
         await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
@@ -107,10 +113,11 @@ class CharityContract extends Contract {
             throw new Error(`Campaign ${asset.id} already exists`);
         }
 
+        const now = this._getTxTimestamp(ctx); // ✅ deterministic - 1 lần gọi cho cả createdAt & updatedAt
         asset.docType = 'campaign';
         asset.currentAmount = 0;
-        asset.createdAt = new Date().toISOString();
-        asset.updatedAt = new Date().toISOString();
+        asset.createdAt = now;
+        asset.updatedAt = now;
 
         await ctx.stub.putState(
             this._campaignKey(asset.id),
@@ -135,11 +142,12 @@ class CharityContract extends Contract {
             throw new Error(`Campaign ${campaignId} not found`);
         }
 
+        const now = this._getTxTimestamp(ctx); // ✅ deterministic
         const asset = JSON.parse(data.toString());
         asset.verificationStatus = 'VERIFIED';
-        asset.verifiedAt = new Date().toISOString();
+        asset.verifiedAt = now;
         asset.verifiedBy = adminId;
-        asset.updatedAt = new Date().toISOString();
+        asset.updatedAt = now;
 
         await ctx.stub.putState(key, Buffer.from(JSON.stringify(asset)));
 
@@ -202,7 +210,7 @@ class CharityContract extends Contract {
         if (campaignData && campaignData.length > 0) {
             const campaign = JSON.parse(campaignData.toString());
             campaign.currentAmount = (campaign.currentAmount || 0) + asset.amount;
-            campaign.updatedAt = new Date().toISOString();
+            campaign.updatedAt = this._getTxTimestamp(ctx); // ✅ deterministic
             await ctx.stub.putState(
                 campaignKey,
                 Buffer.from(JSON.stringify(campaign)),
@@ -291,7 +299,7 @@ class CharityContract extends Contract {
                 txId: res.value.txId,
                 timestamp: new Date(
                     res.value.timestamp.seconds.low * 1000,
-                ).toISOString(),
+                ).toISOString(), // OK: đọc từ Fabric history, không generate
                 isDelete: res.value.isDelete,
                 data: res.value.value
                     ? JSON.parse(res.value.value.toString('utf8'))
@@ -305,4 +313,4 @@ class CharityContract extends Contract {
     }
 }
 
-module.exports = { CharityContract };
+module.exports.contracts = [CharityContract];

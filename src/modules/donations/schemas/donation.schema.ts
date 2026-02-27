@@ -18,6 +18,10 @@ export class Donation {
   @Prop({ type: Types.ObjectId, ref: 'Organization', required: true })
   organizationId: Types.ObjectId;
 
+  @ApiProperty({ description: 'User ID (if logged-in user donates)', required: false })
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  userId?: Types.ObjectId;
+
   @ApiProperty({ description: 'Donation amount', example: 100 })
   @Prop({ required: true })
   amount: number;

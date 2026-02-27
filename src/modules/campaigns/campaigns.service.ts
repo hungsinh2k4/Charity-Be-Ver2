@@ -17,7 +17,7 @@ export class CampaignsService {
     @InjectModel(Campaign.name) private campaignModel: Model<CampaignDocument>,
     private organizationsService: OrganizationsService,
     private blockchainService: BlockchainService,
-  ) {}
+  ) { }
 
   async create(
     createDto: CreateCampaignDto,
@@ -51,20 +51,21 @@ export class CampaignsService {
     });
     const saved = await campaign.save();
 
-    // Record on blockchain (only if organization has been recorded on blockchain)
-    if (organizationBlockchainId) {
-      try {
-        const blockchainId = await this.blockchainService.createCampaign({
-          mongoId: saved._id.toString(),
-          organizationId: organizationBlockchainId,
-          title: saved.title,
-          goalAmount: saved.goalAmount,
-        });
-        saved.blockchainId = blockchainId;
-        await saved.save();
-      } catch (error) {
-        console.error('Blockchain recording failed:', error);
-      }
+    // Luôn ghi campaign lên blockchain:
+    // - Có org → dùng organizationBlockchainId
+    // - Không có org (user cá nhân tạo) → dùng USER_{creatorId} làm ref on-chain
+    try {
+      const blockchainId = await this.blockchainService.createCampaign({
+        mongoId: saved._id.toString(),
+        organizationId: organizationBlockchainId ?? `USER_${creatorId}`,
+        title: saved.title,
+        goalAmount: saved.goalAmount,
+      });
+      saved.blockchainId = blockchainId;
+      await saved.save();
+    } catch (error) {
+      console.error('Blockchain recording failed:', error);
+      // Không block việc tạo campaign, có thể sync sau
     }
 
     return saved;

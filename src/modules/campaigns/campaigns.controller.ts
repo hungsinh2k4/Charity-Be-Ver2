@@ -26,7 +26,7 @@ import type { AuthenticatedUser } from '../auth/interfaces';
 @ApiTags('Campaigns')
 @Controller('campaigns')
 export class CampaignsController {
-  constructor(private campaignsService: CampaignsService) {}
+  constructor(private campaignsService: CampaignsService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard, VerifiedUserGuard)
@@ -79,6 +79,23 @@ export class CampaignsController {
     return this.campaignsService.findByCreator(user.userId);
   }
 
+  // ==================== AUDITOR ENDPOINTS ====================
+
+  @Get('pending-verifications')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.AUDITOR)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '[Auditor] Get all campaigns with pending verification',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns list of campaigns pending verification',
+  })
+  async getPendingVerifications() {
+    return this.campaignsService.findPendingVerifications();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get campaign by ID' })
   @ApiResponse({ status: 200, description: 'Returns campaign details' })
@@ -114,23 +131,6 @@ export class CampaignsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.campaignsService.softDelete(id, user.userId);
-  }
-
-  // ==================== AUDITOR ENDPOINTS ====================
-
-  @Get('pending-verifications')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Auditor] Get all campaigns with pending verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns list of campaigns pending verification',
-  })
-  async getPendingVerifications() {
-    return this.campaignsService.findPendingVerifications();
   }
 
   @Patch(':id/verification-status')

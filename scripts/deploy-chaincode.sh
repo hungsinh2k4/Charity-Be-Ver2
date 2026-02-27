@@ -16,8 +16,8 @@ set -e
 CHAINCODE_NAME="charity-chaincode"
 CHAINCODE_PATH="$(pwd)/chaincode/charity"
 CHANNEL_NAME="mychannel"
-CHAINCODE_VERSION="1.0"
-CHAINCODE_SEQUENCE="1"
+CHAINCODE_VERSION="1.1"
+CHAINCODE_SEQUENCE="2"
 
 # Đường dẫn đến fabric-samples/test-network
 # Thay đổi theo đường dẫn trên máy của bạn
@@ -67,10 +67,18 @@ peer lifecycle chaincode package "${CHAINCODE_NAME}.tar.gz" \
 
 # ─── INSTALL TRÊN ORG1 ───────────────────────────────────────────────────────
 echo "🔧 Installing chaincode trên Org1..."
-peer lifecycle chaincode install "${CHAINCODE_NAME}.tar.gz"
+peer lifecycle chaincode install "${CHAINCODE_NAME}.tar.gz" 2>&1 | \
+  grep -v "already successfully installed" || true
 
 # Lấy package ID
-PACKAGE_ID=$(peer lifecycle chaincode queryinstalled | grep "${CHAINCODE_NAME}_${CHAINCODE_VERSION}" | awk '{print $3}' | tr -d ',')
+PACKAGE_ID=$(peer lifecycle chaincode queryinstalled 2>/dev/null | \
+  grep "${CHAINCODE_NAME}_${CHAINCODE_VERSION}" | \
+  awk '{print $3}' | tr -d ',')
+
+if [ -z "$PACKAGE_ID" ]; then
+  echo "❌ Không lấy được Package ID!"
+  exit 1
+fi
 echo "📋 Package ID: $PACKAGE_ID"
 
 # ─── INSTALL TRÊN ORG2 ───────────────────────────────────────────────────────
