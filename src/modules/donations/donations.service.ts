@@ -117,46 +117,49 @@ export class DonationsService {
     const campaign = await this.campaignsService.findById(donation.campaignId.toString());
 
     // ── Helper: lấy string ID từ populated Mongoose Document HOẶC raw ObjectId ──
-    // Mongoose Document có .id getter luôn trả về hex string.
-    // Types.ObjectId có .toHexString() luôn trả về hex string.
-    // KHÔNG dùng .toString() trực tiếp trên Document vì có thể trả về "[object Object]".
     const extractIdStr = (value: any): string | null => {
       if (!value) return null;
-      // 1. Mongoose Document virtual: .id là string hex 24 chars
       if (typeof value.id === 'string' && value.id.length === 24) return value.id;
-      // 2. ObjectId hoặc populated doc._id: .toHexString()
       if (typeof value.toHexString === 'function') return value.toHexString();
-      // 3. Populated doc: ._id.toHexString()
       if (value._id && typeof value._id.toHexString === 'function') return value._id.toHexString();
-      // 4. Last resort — chỉ dùng nếu là string hợp lệ
       const s = String(value);
       return s === '[object Object]' ? null : s;
     };
 
-    // Ưu tiên lấy bank info của Organization, nếu không có thì lấy của creator
+    // ── Hybrid Approach C: Campaign → Organization → User creator ──────────────
+    // Ưu tiên 1: TK ngân hàng riêng của Campaign
     let bankInfo: import('../organizations/schemas/organization.schema').BankInfo | null = null;
     let ownerName = 'chủ quỹ';
 
-    if (campaign.organizationId) {
+    if ((campaign as any).bankInfo) {
+      bankInfo = (campaign as any).bankInfo;
+      ownerName = `campaign "${campaign.title}"`;
+    }
+
+    // Ưu tiên 2: TK ngân hàng của Organization (nếu campaign thuộc tổ chức)
+    if (!bankInfo && campaign.organizationId) {
       const orgId = extractIdStr(campaign.organizationId);
       if (orgId) {
         try {
           const org = await this.organizationsService.findById(orgId);
-          bankInfo = org.bankInfo ?? null;
-          ownerName = `tổ chức "${org.name}"`;
+          if (org.bankInfo) {
+            bankInfo = org.bankInfo;
+            ownerName = `tổ chức "${org.name}"`;
+          }
         } catch {
-          // org không tìm được, fallback sang creator
+          // org không tìm được, fallback tiếp
         }
       }
     }
 
+    // Ưu tiên 3: TK ngân hàng của User creator (campaign cá nhân)
     if (!bankInfo) {
       const creatorId = extractIdStr(campaign.creatorId);
       if (creatorId) {
         try {
           const creator = await this.usersService.findById(creatorId);
-          if (creator) {
-            bankInfo = (creator as any).bankInfo ?? null;
+          if (creator && (creator as any).bankInfo) {
+            bankInfo = (creator as any).bankInfo;
             ownerName = `người tạo quỹ "${creator.name}"`;
           }
         } catch {

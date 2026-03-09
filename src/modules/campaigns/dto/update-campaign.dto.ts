@@ -7,7 +7,10 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BankInfoDto } from '../../../common/dto/bank-info.dto';
 
 export class UpdateCampaignDto {
   @ApiProperty({ description: 'Campaign title', required: false })
@@ -64,4 +67,16 @@ export class UpdateCampaignDto {
   @IsArray()
   @IsOptional()
   tags?: string[];
+
+  @ApiProperty({
+    description:
+      'Cập nhật tài khoản ngân hàng riêng của campaign (VietQR). ' +
+      'Gọi với giá trị null để xóa, bỏ trống để giữ nguyên.',
+    required: false,
+    type: () => BankInfoDto,
+  })
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  @IsOptional()
+  bankInfo?: BankInfoDto;
 }

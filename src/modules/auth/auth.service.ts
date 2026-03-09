@@ -14,7 +14,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(
     email: string,
@@ -41,6 +41,7 @@ export class AuthService {
       name: registerDto.name,
       phone: registerDto.phone,
       address: registerDto.address,
+      ...(registerDto.bankInfo ? { bankInfo: registerDto.bankInfo } : {}),
     });
 
     return this.generateTokenResponse(user);

@@ -5,7 +5,10 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BankInfoDto } from '../../../common/dto/bank-info.dto';
 
 export class RegisterDto {
   @ApiProperty({ description: 'User email', example: 'user@example.com' })
@@ -32,4 +35,22 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @ApiProperty({
+    description:
+      'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR ' +
+      '(có thể bỏ qua và cập nhật sau trong phần hồ sơ)',
+    required: false,
+    type: () => BankInfoDto,
+    example: {
+      bankName: 'MB Bank',
+      bankBin: '970422',
+      accountNumber: '0123456789',
+      accountName: 'NGUYEN VAN AN',
+    },
+  })
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  @IsOptional()
+  bankInfo?: BankInfoDto;
 }

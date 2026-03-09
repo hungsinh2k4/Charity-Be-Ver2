@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { VerificationStatus } from '../../../common/enums';
 import { ApiProperty } from '@nestjs/swagger';
+import { BankInfo, BankInfoSchema } from '../../organizations/schemas/organization.schema';
 
 export type CampaignDocument = Campaign & Document;
 
@@ -87,6 +88,16 @@ export class Campaign {
   @ApiProperty({ description: 'Campaign tags', type: [String] })
   @Prop({ type: [String], default: [] })
   tags: string[];
+
+  @ApiProperty({
+    description:
+      'Tài khoản ngân hàng riêng của campaign (VietQR). ' +
+      'Nếu để trống, hệ thống sẽ fallback về TK của Tổ chức hoặc User tạo.',
+    required: false,
+    type: () => BankInfo,
+  })
+  @Prop({ type: BankInfoSchema, required: false })
+  bankInfo?: BankInfo;
 
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;

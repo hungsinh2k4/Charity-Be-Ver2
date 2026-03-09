@@ -5,8 +5,11 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Role } from '../../../common/enums';
+import { BankInfoDto } from '../../../common/dto/bank-info.dto';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -45,4 +48,22 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   role: Role;
+
+  @ApiProperty({
+    description:
+      'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR ' +
+      '(dành cho user cá nhân tự tạo campaign — có thể cập nhật sau)',
+    required: false,
+    type: () => BankInfoDto,
+    example: {
+      bankName: 'Vietcombank',
+      bankBin: '970436',
+      accountNumber: '9876543210',
+      accountName: 'NGUYEN VAN AN',
+    },
+  })
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  @IsOptional()
+  bankInfo?: BankInfoDto;
 }

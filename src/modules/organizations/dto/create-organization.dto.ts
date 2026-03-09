@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
+import { BankInfoDto } from '../../../common/dto/bank-info.dto';
 
 export class CreateOrganizationDto {
   @ApiProperty({
@@ -80,4 +82,21 @@ export class CreateOrganizationDto {
   @IsArray()
   @IsOptional()
   legalDocuments?: string[];
+
+  @ApiProperty({
+    description:
+      'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR (có thể cập nhật sau)',
+    required: false,
+    type: () => BankInfoDto,
+    example: {
+      bankName: 'MB Bank',
+      bankBin: '970422',
+      accountNumber: '0123456789',
+      accountName: 'QUY TU THIEN ABC',
+    },
+  })
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  @IsOptional()
+  bankInfo?: BankInfoDto;
 }

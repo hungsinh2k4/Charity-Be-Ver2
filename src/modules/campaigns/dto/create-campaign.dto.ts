@@ -7,7 +7,10 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BankInfoDto } from '../../../common/dto/bank-info.dto';
 
 export class CreateCampaignDto {
   @ApiProperty({
@@ -115,4 +118,22 @@ export class CreateCampaignDto {
   @IsArray()
   @IsOptional()
   tags?: string[];
+
+  @ApiProperty({
+    description:
+      'Tài khoản ngân hàng riêng của campaign để nhận donate qua QR VietQR. ' +
+      'Nếu để trống, hệ thống tự động dùng TK của Tổ chức (nếu có) hoặc User tạo campaign.',
+    required: false,
+    type: () => BankInfoDto,
+    example: {
+      bankName: 'MB Bank',
+      bankBin: '970422',
+      accountNumber: '0123456789',
+      accountName: 'NGUYEN VAN AN',
+    },
+  })
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  @IsOptional()
+  bankInfo?: BankInfoDto;
 }

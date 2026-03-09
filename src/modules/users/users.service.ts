@@ -7,7 +7,7 @@ import { RequestUserVerificationDto } from './dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(userData: {
     email: string;
@@ -15,6 +15,12 @@ export class UsersService {
     name: string;
     phone?: string;
     address?: string;
+    bankInfo?: {
+      bankName: string;
+      bankBin: string;
+      accountNumber: string;
+      accountName: string;
+    };
   }) {
     const user = new this.userModel(userData);
     return user.save();
