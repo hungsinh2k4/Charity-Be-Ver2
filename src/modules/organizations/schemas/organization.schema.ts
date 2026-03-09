@@ -5,6 +5,30 @@ import { VerificationStatus } from '../../../common/enums';
 
 export type OrganizationDocument = Organization & Document;
 
+/**
+ * Thông tin tài khoản ngân hàng để nhận donate
+ */
+@Schema({ _id: false })
+export class BankInfo {
+  @ApiProperty({ description: 'Tên ngân hàng (VD: Vietcombank, MB Bank, Techcombank)', example: 'MB Bank' })
+  @Prop({ required: true })
+  bankName: string;
+
+  @ApiProperty({ description: 'Mã BIN ngân hàng theo chuẩn VietQR (VD: 970422 cho MB Bank)', example: '970422' })
+  @Prop({ required: true })
+  bankBin: string;
+
+  @ApiProperty({ description: 'Số tài khoản ngân hàng', example: '1234567890' })
+  @Prop({ required: true })
+  accountNumber: string;
+
+  @ApiProperty({ description: 'Tên chủ tài khoản (in hoa, không dấu)', example: 'NGUYEN VAN AN' })
+  @Prop({ required: true })
+  accountName: string;
+}
+
+export const BankInfoSchema = SchemaFactory.createForClass(BankInfo);
+
 @Schema({ timestamps: true })
 export class Organization {
   @ApiProperty({ description: 'Blockchain record ID', required: false })
@@ -64,6 +88,10 @@ export class Organization {
   @ApiProperty({ description: 'Soft delete flag' })
   @Prop({ default: false })
   isDeleted: boolean;
+
+  @ApiProperty({ description: 'Thông tin ngân hàng để nhận donate (VietQR)', required: false, type: () => BankInfo })
+  @Prop({ type: BankInfoSchema, required: false })
+  bankInfo?: BankInfo;
 
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;
