@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -30,6 +31,9 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
       }),
       inject: [ConfigService],
     }),
+
+    // Scheduler (cron jobs — polling tự động kiểm tra GD VietQR)
+    ScheduleModule.forRoot(),
 
     // Feature Modules
     BlockchainModule,

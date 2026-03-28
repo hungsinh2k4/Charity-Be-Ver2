@@ -5,11 +5,15 @@ import { ApiProperty } from '@nestjs/swagger';
 export type DonationDocument = Donation & Document;
 
 export enum PaymentStatus {
-  PENDING = 'pending',      // Chờ chuyển khoản
-  CONFIRMED = 'confirmed',  // Đã xác nhận (admin/auto đối soát)
-  EXPIRED = 'expired',      // Quá hạn (không chuyển)
+  CONFIRMED = 'confirmed',  // Đã xác nhận — VietQR hoặc Admin đã verify tiền về
+  EXPIRED = 'expired',      // Donation bị huỷ do quá hạn (không có GD khớp)
   CANCELLED = 'cancelled',  // Hủy bởi user
 }
+
+/**
+ * NOTE: Donation chỉ được tạo trong MongoDB khi VietQR xác nhận đã nhận tiền.
+ * Trước đó, dữ liệu tạm được lưu trong PendingDonation.
+ */
 
 @Schema({ timestamps: true })
 export class Donation {
@@ -61,17 +65,26 @@ export class Donation {
   @Prop()
   paymentMethod?: string;
 
-  @ApiProperty({ description: 'Trạng thái thanh toán', enum: PaymentStatus, default: PaymentStatus.PENDING })
-  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.PENDING })
+  @ApiProperty({ description: 'Trạng thái thanh toán — Donation chỉ tạo khi đã CONFIRMED', enum: PaymentStatus, default: PaymentStatus.CONFIRMED })
+  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.CONFIRMED })
   paymentStatus: PaymentStatus;
 
-  @ApiProperty({ description: 'Thời điểm xác nhận chuyển khoản thành công', required: false })
+  @ApiProperty({ description: 'Thời điểm VietQR / ngân hàng xác nhận tiền đã về', required: false })
   @Prop()
-  verifiedAt?: Date;
+  paidAt?: Date;
 
-  @ApiProperty({ description: 'Payment reference/transaction ID from bank (nếu có)', required: false })
+  @ApiProperty({ description: 'Mã giao dịch ngân hàng do VietQR trả về (để audit)', required: false })
   @Prop()
-  paymentReference?: string;
+  vietqrTxRef?: string;
+
+  @ApiProperty({ description: 'Bank info snapshot: TK nhận tiền tại thời điểm donate', required: false })
+  @Prop({ type: Object })
+  bankInfoSnapshot?: {
+    bankBin: string;
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+  };
 
   @ApiProperty({ description: 'Whether donor wants email updates' })
   @Prop({ default: false })
@@ -83,7 +96,7 @@ export class Donation {
 
 export const DonationSchema = SchemaFactory.createForClass(Donation);
 
-// Index để tìm kiếm nhanh theo transferCode
-DonationSchema.index({ transferCode: 1 }, { unique: true });
+// Indexes để tìm kiếm nhanh
+// transferCode đã có unique index từ @Prop({ unique: true }) — không cần khai báo lại
 DonationSchema.index({ paymentStatus: 1 });
 DonationSchema.index({ campaignId: 1, paymentStatus: 1 });
