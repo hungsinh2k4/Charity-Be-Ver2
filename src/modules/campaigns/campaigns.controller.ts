@@ -45,7 +45,7 @@ export class CampaignsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all campaigns with optional filters' })
+  @ApiOperation({ summary: 'List all campaigns with optional filters and pagination' })
   @ApiQuery({ name: 'organizationId', required: false })
   @ApiQuery({
     name: 'verificationStatus',
@@ -53,17 +53,24 @@ export class CampaignsController {
     required: false,
   })
   @ApiQuery({ name: 'isActive', type: Boolean, required: false })
-  @ApiResponse({ status: 200, description: 'Returns list of campaigns' })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Items per page (default: 10)' })
+  @ApiResponse({ status: 200, description: 'Returns paginated list of campaigns' })
   async findAll(
     @Query('organizationId') organizationId?: string,
     @Query('verificationStatus') verificationStatus?: VerificationStatus,
     @Query('isActive') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.campaignsService.findAll({
       organizationId,
       verificationStatus,
       isActive:
         isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+    }, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 10,
     });
   }
 

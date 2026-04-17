@@ -75,7 +75,22 @@ export class CampaignsService {
     organizationId?: string;
     verificationStatus?: VerificationStatus;
     isActive?: boolean;
-  }): Promise<CampaignDocument[]> {
+  }, pagination?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: CampaignDocument[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+    const skip = (page - 1) * limit;
+
     const query: {
       isDeleted: boolean;
       organizationId?: Types.ObjectId;
@@ -91,11 +106,27 @@ export class CampaignsService {
     if (filters?.isActive !== undefined) {
       query.isActive = filters.isActive;
     }
-    return this.campaignModel
-      .find(query)
-      .populate('organizationId', 'name')
-      .populate('creatorId', 'name email')
-      .exec();
+
+    const [data, total] = await Promise.all([
+      this.campaignModel
+        .find(query)
+        .populate('organizationId', 'name')
+        .populate('creatorId', 'name email')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.campaignModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findByCreator(creatorId: string): Promise<CampaignDocument[]> {
