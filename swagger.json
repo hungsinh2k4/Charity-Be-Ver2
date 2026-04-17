@@ -1,0 +1,2207 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Transparent Donation System API",
+    "description": "## Overview\nA blockchain-enabled donation platform ensuring transparency, auditability, and immutability.\n\n## Features\n- **User Management**: Registration, authentication, and verification\n- **Organization Management**: CRUD with blockchain recording\n- **Campaign Management**: Create and manage fundraising campaigns\n- **Donations**: Anonymous donation support with blockchain verification\n- **Verification System**: Multi-level verification for users, organizations, and campaigns\n- **Audit Trail**: Complete blockchain-backed audit history\n\n## Authentication\nMost endpoints require JWT authentication. Include the token in the Authorization header:\n```\nAuthorization: Bearer <your-jwt-token>\n```\n\n## Roles\n- **USER**: Standard user account\n- **ADMIN**: Full administrative access\n- **AUDITOR**: Read-only access to verification and audit data",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Transparent Donation System"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token từ POST /auth/login"
+      }
+    },
+    "schemas": {
+      "BankInfoDto": {
+        "type": "object",
+        "required": [
+          "bankName",
+          "bankBin",
+          "accountNumber",
+          "accountName"
+        ],
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "description": "Tên ngân hàng",
+            "example": "MB Bank"
+          },
+          "bankBin": {
+            "type": "string",
+            "description": "Mã BIN ngân hàng theo chuẩn VietQR",
+            "example": "970422"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Số tài khoản ngân hàng",
+            "example": "1234567890"
+          },
+          "accountName": {
+            "type": "string",
+            "description": "Tên chủ tài khoản (in hoa, không dấu)",
+            "example": "NGUYEN VAN AN"
+          }
+        }
+      },
+      "RegisterDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "description": "User password (tối thiểu 6 ký tự)",
+            "example": "Password123"
+          },
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "example": "Nguyen Van An"
+          },
+          "phone": {
+            "type": "string",
+            "description": "User phone number",
+            "example": "0123456789"
+          },
+          "address": {
+            "type": "string",
+            "description": "User address",
+            "example": "Hà Nội"
+          },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto",
+            "description": "Thông tin tài khoản ngân hàng (có thể cập nhật sau)"
+          }
+        }
+      },
+      "LoginDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123"
+          }
+        }
+      },
+      "CreateOrganizationDto": {
+        "type": "object",
+        "required": [
+          "userId",
+          "name"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "User ID (sẽ được set tự động từ JWT token)",
+            "example": "676a1b2c3d4e5f6a7b8c9d0e"
+          },
+          "name": {
+            "type": "string",
+            "description": "Organization name",
+            "example": "Quỹ Từ Thiện Trái Tim Nhân Ái"
+          },
+          "description": {
+            "type": "string",
+            "description": "Organization description (mission, vision, activities)",
+            "example": "Tổ chức từ thiện phi lợi nhuận hoạt động trong lĩnh vực giáo dục và y tế cho trẻ em nghèo vùng cao"
+          },
+          "website": {
+            "type": "string",
+            "description": "Organization website URL",
+            "example": "https://traitim-charity.org"
+          },
+          "contactEmail": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "contact@traitim-charity.org"
+          },
+          "contactPhone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "0901234567"
+          },
+          "address": {
+            "type": "string",
+            "description": "Physical address / headquarters location",
+            "example": "123 Lê Lợi, Quận 1, TP. Hồ Chí Minh"
+          },
+          "legalDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Legal documents URLs for verification",
+            "example": [
+              "https://storage.example.com/docs/license.pdf",
+              "https://storage.example.com/docs/certificate.jpg"
+            ]
+          },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto"
+          },
+          "sepayApiKey": {
+            "type": "string",
+            "description": "SePay API Key riêng của tổ chức (lấy từ https://sepay.vn → Dashboard → API Key). Cho phép hệ thống tự động polling xác nhận chuyển khoản mà không cần cấu hình toàn cục.",
+            "example": "DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1"
+          }
+        }
+      },
+      "UpdateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Organization name",
+            "example": "Quỹ Từ Thiện Trái Tim Nhân Ái - Cập nhật"
+          },
+          "description": {
+            "type": "string",
+            "description": "Organization description"
+          },
+          "website": {
+            "type": "string",
+            "description": "Organization website URL",
+            "example": "https://traitim-charity.org"
+          },
+          "contactEmail": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "info@traitim-charity.org"
+          },
+          "contactPhone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "0287654321"
+          },
+          "address": {
+            "type": "string",
+            "description": "Physical address",
+            "example": "456 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh"
+          },
+          "legalDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Legal documents URLs for verification"
+          },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto"
+          },
+          "sepayApiKey": {
+            "type": "string",
+            "description": "SePay API Key riêng của tổ chức (lấy từ https://sepay.vn → Dashboard → API Key). Cho phép hệ thống tự động polling xác nhận chuyển khoản mà không cần cấu hình toàn cục.",
+            "example": "DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1"
+          }
+        }
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "description": "Cập nhật hồ sơ user",
+        "properties": {
+          "name": { "type": "string", "description": "User full name", "example": "Nguyen Van An" },
+          "password": { "type": "string", "minLength": 6, "description": "Mật khẩu mới" },
+          "phone": { "type": "string", "example": "0123456789" },
+          "address": { "type": "string", "example": "Hà Nội" },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto",
+            "description": "Thông tin ngân hàng để nhận donate (cho user tự tạo campaign không qua org)"
+          },
+          "sepayApiKey": {
+            "type": "string",
+            "description": "SePay API Key cá nhân. Dùng khi user tự tạo campaign không qua tổ chức nào. Ưu tiên thứ 3 khi polling (sau Campaign và Org key).",
+            "example": "DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1"
+          }
+        }
+      },
+      "CreateCampaignDto": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "goalAmount"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Campaign title",
+            "example": "Clean Water for Rural Communities"
+          },
+          "description": {
+            "type": "string",
+            "description": "Campaign description",
+            "example": "This campaign aims to provide clean water access to 100 rural families."
+          },
+          "summary": {
+            "type": "string",
+            "description": "Short summary (1-2 sentences)",
+            "example": "Help 100 families access clean water"
+          },
+          "coverImage": {
+            "type": "string",
+            "description": "Cover image URL",
+            "example": "https://example.com/images/water-campaign.jpg"
+          },
+          "goalAmount": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Target donation amount",
+            "example": 10000000
+          },
+          "currency": {
+            "type": "string",
+            "default": "VND",
+            "description": "Currency code (ISO 4217)",
+            "example": "VND"
+          },
+          "organizationId": {
+            "type": "string",
+            "description": "Organization ID (optional)",
+            "example": "676a1b2c3d4e5f6a7b8c9d0e"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Campaign start date",
+            "example": "2025-01-01T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Campaign end date",
+            "example": "2025-12-31T23:59:59.999Z"
+          },
+          "category": {
+            "type": "string",
+            "description": "Campaign category",
+            "example": "Environment"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Campaign tags",
+            "example": [
+              "water",
+              "rural",
+              "health"
+            ]
+          },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto",
+            "description": "Tài khoản ngân hàng riêng của campaign (nếu để trống sẽ dùng TK của Org hoặc User tạo)"
+          },
+          "sepayApiKey": {
+            "type": "string",
+            "description": "SePay API Key riêng của campaign. Ưu tiên cao nhất khi polling (trước Org và User key). Dùng khi campaign có TK nhận tiền riêng biệt.",
+            "example": "DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1"
+          }
+        }
+      },
+      "UpdateCampaignDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "coverImage": {
+            "type": "string"
+          },
+          "goalAmount": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "category": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bankInfo": {
+            "$ref": "#/components/schemas/BankInfoDto"
+          },
+          "sepayApiKey": {
+            "type": "string",
+            "description": "SePay API Key ri\u00eang c\u1ee7a campaign. \u01afu ti\u00ean cao nh\u1ea5t khi polling.",
+            "example": "DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1"
+          }
+        }
+      },
+      "CreateDonationDto": {
+        "type": "object",
+        "required": [
+          "campaignId",
+          "amount"
+        ],
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "description": "Campaign ID to donate to",
+            "example": "676a1b2c3d4e5f6a7b8c9d0e"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Donation amount (VND)",
+            "example": 100000
+          },
+          "currency": {
+            "type": "string",
+            "default": "VND",
+            "description": "Currency code",
+            "example": "VND"
+          },
+          "donorEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Donor email for updates",
+            "example": "donor@example.com"
+          },
+          "donorName": {
+            "type": "string",
+            "description": "Donor display name",
+            "example": "Nguyen Van B"
+          },
+          "isAnonymous": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to hide donor info publicly"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message from donor",
+            "example": "Chúc chiến dịch thành công!"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment method",
+            "example": "bank_transfer"
+          },
+          "paymentReference": {
+            "type": "string",
+            "description": "Payment reference/transaction ID"
+          },
+          "subscribeToUpdates": {
+            "type": "boolean",
+            "default": false,
+            "description": "Subscribe to campaign updates"
+          }
+        }
+      },
+      "SepayWebhookPayload": {
+        "type": "object",
+        "description": "Payload từ Sepay webhook khi có giao dịch mới",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 12345
+          },
+          "gateway": {
+            "type": "string",
+            "example": "MB Bank"
+          },
+          "transaction_date": {
+            "type": "string",
+            "example": "2026-03-18 14:30:00"
+          },
+          "account_number": {
+            "type": "string",
+            "example": "0123456789"
+          },
+          "sub_account": {
+            "type": "string",
+            "example": ""
+          },
+          "amount_in": {
+            "type": "number",
+            "example": 100000
+          },
+          "amount_out": {
+            "type": "number",
+            "example": 0
+          },
+          "accumulated": {
+            "type": "number",
+            "example": 100000
+          },
+          "code": {
+            "type": "string",
+            "example": "DONAB12CD34"
+          },
+          "transaction_content": {
+            "type": "string",
+            "description": "Nội dung chuyển khoản — chứa transferCode (DON...)",
+            "example": "CHUYEN KHOAN DONAB12CD34"
+          },
+          "reference_number": {
+            "type": "string",
+            "example": "VCB123456"
+          },
+          "body": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "CassoWebhookPayload": {
+        "type": "object",
+        "description": "Payload từ Casso webhook",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "tid": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "when": {
+                  "type": "integer",
+                  "description": "Unix timestamp"
+                },
+                "bankSubAccId": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Users",
+      "description": "User management endpoints"
+    },
+    {
+      "name": "Organizations",
+      "description": "Organization management endpoints"
+    },
+    {
+      "name": "Campaigns",
+      "description": "Campaign management endpoints"
+    },
+    {
+      "name": "Donations",
+      "description": "Donation endpoints (public)"
+    },
+    {
+      "name": "Verification",
+      "description": "Verification request endpoints"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Dùng cho Docker healthcheck",
+        "operationId": "healthCheck",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Server đang hoạt động",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register a new user account",
+        "operationId": "authRegister",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "admin",
+                            "auditor"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login with email and password",
+        "operationId": "authLogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful — returns JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "JWT token dùng để xác thực các request tiếp theo",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/organizations": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Create a new organization (requires verified user)",
+        "operationId": "createOrganization",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organization created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "User must be verified"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "List all organizations",
+        "operationId": "findAllOrganizations",
+        "responses": {
+          "200": {
+            "description": "Returns list of organizations"
+          }
+        }
+      }
+    },
+    "/organizations/my": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get organizations created by current user",
+        "operationId": "findMyOrganizations",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of user's organizations"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/organizations/pending-verifications": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "[Auditor] Get all organizations with pending verification",
+        "operationId": "getOrgPendingVerifications",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of organizations pending verification"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Auditor role required"
+          }
+        }
+      }
+    },
+    "/organizations/{id}": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get organization by ID",
+        "operationId": "findOneOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Organization MongoDB ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns organization details"
+          },
+          "404": {
+            "description": "Organization not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Update organization (creator only)",
+        "operationId": "updateOrganization",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Organization updated successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not authorized to update this organization"
+          },
+          "404": {
+            "description": "Organization not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Delete organization (soft delete, creator only)",
+        "operationId": "removeOrganization",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not authorized to delete this organization"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/request-verification": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Request verification for organization (requires legal documents)",
+        "operationId": "requestOrgVerification",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification request submitted successfully"
+          },
+          "400": {
+            "description": "Legal documents are required or verification already pending/completed"
+          },
+          "403": {
+            "description": "Only organization owner can request verification"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/verification-status": {
+      "patch": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "[Auditor] Approve or reject organization verification",
+        "operationId": "updateOrgVerificationStatus",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "unverified",
+                      "pending",
+                      "verified",
+                      "rejected"
+                    ],
+                    "example": "verified"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification status updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Auditor role required"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/audit": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get organization blockchain audit trail",
+        "operationId": "getOrgAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain audit history"
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Create a new campaign (requires verified user)",
+        "operationId": "createCampaign",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "User must be verified to create campaign"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "List all campaigns with optional filters",
+        "operationId": "findAllCampaigns",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "verificationStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unverified",
+                "pending",
+                "verified",
+                "rejected"
+              ]
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of campaigns"
+          }
+        }
+      }
+    },
+    "/campaigns/my": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Get campaigns created by current user",
+        "operationId": "findMyCampaigns",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of campaigns created by current user"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/campaigns/pending-verifications": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "[Auditor] Get all campaigns with pending verification",
+        "operationId": "getCampaignPendingVerifications",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of campaigns pending verification"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Auditor role required"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Get campaign by ID",
+        "operationId": "findOneCampaign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns campaign details"
+          },
+          "404": {
+            "description": "Campaign not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Update campaign (creator only)",
+        "operationId": "updateCampaign",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCampaignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Campaign updated successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not authorized to update this campaign"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Delete campaign (soft delete, creator only)",
+        "operationId": "removeCampaign",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not authorized to delete this campaign"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/verification-status": {
+      "patch": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "[Auditor] Approve or reject campaign verification",
+        "operationId": "updateCampaignVerificationStatus",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "unverified",
+                      "pending",
+                      "verified",
+                      "rejected"
+                    ],
+                    "example": "verified"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Campaign verification status updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Auditor role required"
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/audit": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Get campaign blockchain audit trail",
+        "operationId": "getCampaignAuditTrail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain audit history"
+          }
+        }
+      }
+    },
+    "/donations": {
+      "post": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[BƯỚC 1] Khởi tạo donation — nhận transferCode để chuyển khoản",
+        "operationId": "createDonation",
+        "description": "Tạo một PendingDonation với mã tham chiếu (transferCode). Donation thật chỉ được lưu SAU KHI hệ thống xác nhận tiền đã về qua Sepay webhook hoặc polling. Sau khi gọi API này, frontend hiển thị QR VietQR để donor quét và chuyển khoản.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDonationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PendingDonation tạo thành công — donor cần chuyển khoản",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingId": {
+                      "type": "string",
+                      "example": "676a1b2c3d4e5f6a7b8c9d0e"
+                    },
+                    "transferCode": {
+                      "type": "string",
+                      "example": "DONAB12CD34"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 100000
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "VND"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Vui lòng chuyển khoản 100,000 VND với nội dung: DONAB12CD34"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campaign không active hoặc chưa cấu hình TK ngân hàng"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Thống kê donation đã xác nhận (CONFIRMED)",
+        "operationId": "getDonationStats",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter theo campaign ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns donation statistics"
+          }
+        }
+      }
+    },
+    "/donations/my": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Lấy danh sách donation đã xác nhận của user đang đăng nhập",
+        "operationId": "findMyDonations",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of confirmed donations"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/donations/debug/sepay-ping": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[DEBUG] Test Sepay API key — kiểm tra key có hoạt động không",
+        "operationId": "debugSepayPing",
+        "description": "Gọi Sepay API với account_number từ query param, trả về 5 GD gần nhất. Nếu thấy lệnh \"transactions\", key hoạt động tốt.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "accountNumber",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Số TK ngân hàng đã liên kết Sepay"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kết quả từ Sepay API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "provider": {
+                      "type": "string",
+                      "example": "sepay"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "recentTransactions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/donations/lookup/{transferCode}": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Tra cứu donation theo mã CK (DON...)",
+        "operationId": "lookupDonationByTransferCode",
+        "description": "Tìm kiếm trong cả PendingDonation (chưa xác nhận) và Donation (đã confirmed).",
+        "parameters": [
+          {
+            "name": "transferCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "DONAB12CD34"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin donation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "confirmed"
+                      ]
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "transferCode": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy mã"
+          }
+        }
+      }
+    },
+    "/donations/campaign/{campaignId}": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Lấy tất cả donations đã CONFIRMED của một campaign",
+        "operationId": "findDonationsByCampaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of confirmed donations for the campaign"
+          }
+        }
+      }
+    },
+    "/donations/confirm/{transferCode}": {
+      "post": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[ADMIN] Xác nhận donation thủ công theo mã CK",
+        "operationId": "confirmDonationByTransferCode",
+        "description": "Admin tra ngân hàng thấy GD có nội dung DON..., gọi API này để xác nhận. Hệ thống sẽ tạo Donation thật, cộng tiền vào campaign, ghi blockchain.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transferCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "DONAB12CD34"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "adminNote": {
+                    "type": "string",
+                    "example": "Đã nhận GD 14:32 ngày 18/03/2026, ref: VCB12345"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Donation xác nhận thành công — Donation record đã tạo"
+          },
+          "400": {
+            "description": "Đã xác nhận rồi hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "Mã không tồn tại"
+          }
+        }
+      }
+    },
+    "/donations/{pendingId}/payment-qr": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[BƯỚC 2] Lấy QR VietQR để chuyển khoản",
+        "operationId": "getPaymentQR",
+        "description": "Trả về QR code chứa số TK nhận tiền, số tiền, và nội dung CK = transferCode. Donor quét QR bằng app ngân hàng là tự điền đủ thông tin.",
+        "parameters": [
+          {
+            "name": "pendingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR data + thông tin chuyển khoản",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pendingId": {
+                      "type": "string"
+                    },
+                    "transferCode": {
+                      "type": "string",
+                      "example": "DONAB12CD34"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 100000
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "VND"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "qrCodeDataUrl": {
+                      "type": "string",
+                      "description": "base64 PNG data URL"
+                    },
+                    "vietqrImageUrl": {
+                      "type": "string",
+                      "description": "URL ảnh QR từ VietQR API"
+                    },
+                    "vietqrDeeplink": {
+                      "type": "string",
+                      "description": "Deeplink mở app ngân hàng"
+                    },
+                    "bankInfo": {
+                      "type": "object",
+                      "properties": {
+                        "bankName": {
+                          "type": "string"
+                        },
+                        "accountNumber": {
+                          "type": "string"
+                        },
+                        "accountName": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "instruction": {
+                      "type": "object",
+                      "properties": {
+                        "step1": {
+                          "type": "string"
+                        },
+                        "step2": {
+                          "type": "string"
+                        },
+                        "step3": {
+                          "type": "string"
+                        },
+                        "step4": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donation đã hết hạn hoặc đã xác nhận"
+          }
+        }
+      }
+    },
+    "/donations/{pendingId}/payment-qr/image": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Ảnh QR PNG (stream) — nhúng thẳng vào <img src=\"...\"> trên frontend",
+        "operationId": "getPaymentQRImage",
+        "parameters": [
+          {
+            "name": "pendingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG image stream",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/{pendingId}/status": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[BƯỚC 3] Frontend poll trạng thái donation (donor đang chờ xác nhận)",
+        "operationId": "getDonationStatus",
+        "description": "Frontend gọi API này mỗi 5-10 giây để kiểm tra xem donation đã được xác nhận chưa. Khi status = \"payment_confirmed\", redirect donor đến trang thành công.",
+        "parameters": [
+          {
+            "name": "pendingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái pending donation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "waiting_payment",
+                        "checking",
+                        "payment_confirmed",
+                        "expired"
+                      ],
+                      "example": "waiting_payment"
+                    },
+                    "transferCode": {
+                      "type": "string",
+                      "example": "DONAB12CD34"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 100000
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "remainingSeconds": {
+                      "type": "integer",
+                      "example": 1755
+                    },
+                    "donationId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/{id}": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Lấy donation đã confirmed theo ID",
+        "operationId": "findOneDonation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns donation details"
+          },
+          "404": {
+            "description": "Donation not found"
+          }
+        }
+      }
+    },
+    "/donations/{id}/verify": {
+      "get": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "Xác minh donation trên blockchain",
+        "operationId": "verifyDonationOnBlockchain",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain verification result"
+          }
+        }
+      }
+    },
+    "/donations/webhook/sepay": {
+      "post": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[WEBHOOK] Nhận thông báo GD từ Sepay",
+        "operationId": "handleSepayWebhook",
+        "description": "Sepay gọi endpoint này khi phát hiện GD mới trong TK ngân hàng được liên kết. Hệ thống sẽ tự động tìm PendingDonation khớp transferCode và xác nhận. Cấu hình URL này trong dashboard Sepay.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SepayWebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "processed": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/donations/webhook/casso": {
+      "post": {
+        "tags": [
+          "Donations"
+        ],
+        "summary": "[WEBHOOK] Nhận thông báo GD từ Casso",
+        "operationId": "handleCassoWebhook",
+        "description": "Casso gọi endpoint này khi phát hiện GD mới.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CassoWebhookPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "processed": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get admin dashboard statistics",
+        "operationId": "getAdminDashboardStats",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns dashboard statistics"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin or Auditor role required"
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get all users (Admin only)",
+        "operationId": "adminGetAllUsers",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns list of all users"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/admin/users/{id}/role": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update user role (Admin only)",
+        "operationId": "adminUpdateUserRole",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "role"
+                ],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "admin",
+                      "auditor"
+                    ],
+                    "example": "auditor"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User role updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/admin/audit/organizations/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get organization audit trail",
+        "operationId": "adminGetOrgAudit",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain audit trail"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin or Auditor role required"
+          }
+        }
+      }
+    },
+    "/admin/audit/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get campaign audit trail",
+        "operationId": "adminGetCampaignAudit",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain audit trail"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin or Auditor role required"
+          }
+        }
+      }
+    },
+    "/admin/blockchain/summary": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get blockchain summary",
+        "operationId": "adminGetBlockchainSummary",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns blockchain stats"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin or Auditor role required"
+          }
+        }
+      }
+    }
+  }
+}

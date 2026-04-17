@@ -84,8 +84,7 @@ export class CreateOrganizationDto {
   legalDocuments?: string[];
 
   @ApiProperty({
-    description:
-      'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR (có thể cập nhật sau)',
+    description: 'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR (có thể cập nhật sau)',
     required: false,
     type: () => BankInfoDto,
     example: {
@@ -99,4 +98,15 @@ export class CreateOrganizationDto {
   @Type(() => BankInfoDto)
   @IsOptional()
   bankInfo?: BankInfoDto;
+
+  @ApiProperty({
+    description:
+      'SePay API Key riêng của tổ chức (lấy từ https://sepay.vn → Dashboard → API Key). ' +
+      'Cho phép hệ thống tự động polling xác nhận chuyển khoản mà không cần cấu hình toàn cục.',
+    required: false,
+    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
+  })
+  @IsString()
+  @IsOptional()
+  sepayApiKey?: string;
 }

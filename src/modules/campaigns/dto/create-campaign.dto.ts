@@ -136,4 +136,15 @@ export class CreateCampaignDto {
   @Type(() => BankInfoDto)
   @IsOptional()
   bankInfo?: BankInfoDto;
+
+  @ApiProperty({
+    description:
+      'SePay API Key riêng của campaign (lấy từ https://sepay.vn → Dashboard → API Key). ' +
+      'Ưu tiên cao nhất khi polling — dùng khi campaign có TK nhận tiền riêng biệt với Org/User.',
+    required: false,
+    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
+  })
+  @IsString()
+  @IsOptional()
+  sepayApiKey?: string;
 }

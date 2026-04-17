@@ -117,6 +117,17 @@ export class CampaignsService {
     return campaign;
   }
 
+  /**
+   * Tìm campaign kèm sepayApiKey (field có select:false).
+   * CHỈ dùng nội bộ (polling service) — không expose ra API response.
+   */
+  async findByIdWithApiKey(id: string): Promise<CampaignDocument | null> {
+    return this.campaignModel
+      .findById(id)
+      .select('+sepayApiKey')
+      .exec();
+  }
+
   async update(
     id: string,
     updateDto: UpdateCampaignDto,
