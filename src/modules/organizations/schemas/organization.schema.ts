@@ -93,6 +93,16 @@ export class Organization {
   @Prop({ type: BankInfoSchema, required: false })
   bankInfo?: BankInfo;
 
+  @ApiProperty({
+    description:
+      'SePay API Key riêng của tổ chức (lấy từ https://sepay.vn → Dashboard → API). ' +
+      'Dùng để polling giao dịch chuyển khoản tự động. Bảo mật: không trả về trong response.',
+    required: false,
+    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
+  })
+  @Prop({ required: false, select: false })
+  sepayApiKey?: string;
+
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;
 

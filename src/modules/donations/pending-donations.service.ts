@@ -265,9 +265,54 @@ export class PendingDonationsService {
 
   /**
    * Poll 1 PendingDonation — kiểm tra ngân hàng xem có GD khớp không.
+   *
+   * Thứ tự ưu tiên SePay API key:
+   *   1. Campaign riêng (bankInfo gắn với campaign)
+   *   2. Organization (nếu campaign thuộc org)
+   *   3. User tạo campaign (creator cá nhân)
+   *   4. Key toàn cục trong .env (SEPAY_API_KEY)
    */
   async pollSinglePending(pending: PendingDonationDocument): Promise<void> {
     if (!pending.bankInfoSnapshot) return;
+
+    // ── Resolve SePay API key theo thứ tự ưu tiên ────────────────────────
+    let resolvedApiKey: string | undefined;
+
+    // 1. Campaign key (ưu tiên cao nhất — TK nhận tiền là của campaign)
+    if (pending.campaignId) {
+      try {
+        const campaign = await this.campaignsService.findByIdWithApiKey(
+          pending.campaignId.toString(),
+        );
+        resolvedApiKey = campaign?.sepayApiKey || undefined;
+      } catch { /* fallback */ }
+    }
+
+    // 2. Organization key
+    if (!resolvedApiKey && pending.organizationId) {
+      try {
+        const org = await this.organizationsService.findByIdWithApiKey(
+          pending.organizationId.toString(),
+        );
+        resolvedApiKey = org?.sepayApiKey || undefined;
+      } catch { /* fallback */ }
+    }
+
+    // 3. User (creator) key — resolve qua campaign.creatorId
+    if (!resolvedApiKey && pending.campaignId) {
+      try {
+        const campaign = await this.campaignsService.findById(
+          pending.campaignId.toString(),
+        );
+        const creatorIdStr = (campaign.creatorId as any)?.toString?.();
+        if (creatorIdStr) {
+          const creator = await this.usersService.findByIdWithApiKey(creatorIdStr);
+          resolvedApiKey = creator?.sepayApiKey || undefined;
+        }
+      } catch { /* fallback */ }
+    }
+
+    // 4. Không có key nào → undefined → vietqrPaymentService tự dùng .env key
 
     try {
       pending.status = PendingStatus.CHECKING;
@@ -280,7 +325,9 @@ export class PendingDonationsService {
         pending.transferCode,
         pending.amount,
         pending.createdAt!, // Chỉ tìm GD sau thời điểm tạo PendingDonation
+        resolvedApiKey,     // key theo thứ tự ưu tiên (undefined = .env global)
       );
+
 
       if (result.matched && result.transaction) {
         await this.confirmAndCreateDonation(pending, result.transaction, 'poll:auto');

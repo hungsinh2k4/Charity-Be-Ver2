@@ -56,19 +56,21 @@ export class VietQRPaymentService {
    * @param transferCode  - Mã đối soát (nội dung CK)
    * @param amount        - Số tiền cần khớp
    * @param fromDate      - Kiểm tra từ thời điểm này (≈ thời điểm tạo PendingDonation)
+   * @param orgApiKey     - SePay API key riêng của org (ghi đè lên SEPAY_API_KEY trong .env nếu có)
    */
   async checkTransaction(
     accountNumber: string,
     transferCode: string,
     amount: number,
     fromDate: Date,
+    orgApiKey?: string,
   ): Promise<VietQRCheckResult> {
-    // ─── Chọn provider tùy config — default 'mock' để dev không cần cấu hình gì thêm ───
+    // ─── Chọn provider tùy config — default ‘mock’ để dev không cần cấu hình gì thêm ───
     const provider = this.configService.get<string>('PAYMENT_PROVIDER', 'mock');
 
     switch (provider) {
       case 'sepay':
-        return this.checkViaSepay(accountNumber, transferCode, amount, fromDate);
+        return this.checkViaSepay(accountNumber, transferCode, amount, fromDate, orgApiKey);
       case 'casso':
         return this.checkViaCasso(accountNumber, transferCode, amount, fromDate);
       case 'mock':
@@ -79,24 +81,30 @@ export class VietQRPaymentService {
     }
   }
 
-  // ─── Sepay Integration ────────────────────────────────────────────────────
+  // ─── Sepay Integration ────────────────────────────────────────────────────────────
   /**
    * Sepay (https://sepay.vn) — dịch vụ nhận webhook ngân hàng phổ biến tại VN.
    * Cung cấp API lịch sử GD theo accountNumber.
+   *
+   * @param orgApiKey - API key riêng của org (ghi đè SEPAY_API_KEY toàn cục nếu có)
    */
   private async checkViaSepay(
     accountNumber: string,
     transferCode: string,
     amount: number,
     fromDate: Date,
+    orgApiKey?: string,
   ): Promise<VietQRCheckResult> {
-    const apiKey = this.configService.get<string>('SEPAY_API_KEY');
+    // Ưu tiên: key riêng của org → key toàn cục trong .env
+    const apiKey = orgApiKey || this.configService.get<string>('SEPAY_API_KEY');
     const baseUrl = this.configService.get<string>('SEPAY_API_URL', 'https://my.sepay.vn/userapi');
 
     if (!apiKey) {
-      this.logger.warn('SEPAY_API_KEY không được cấu hình');
+      this.logger.warn('SEPAY_API_KEY chưa được cấu hình (cả org lẫn .env)');
       return { matched: false };
     }
+
+    const keySource = orgApiKey ? 'org-level' : 'env-global';
 
     try {
       const response = await firstValueFrom(
@@ -114,7 +122,7 @@ export class VietQRPaymentService {
       const transactions: any[] = response.data?.transactions ?? [];
 
       this.logger.debug(
-        `Sepay trả về ${transactions.length} GD, tìm mã: ${transferCode}`,
+        `[${keySource}] Sepay trả về ${transactions.length} GD, tìm mã: ${transferCode}`,
       );
 
       // Match theo transaction_content (field thực tế từ Sepay API)

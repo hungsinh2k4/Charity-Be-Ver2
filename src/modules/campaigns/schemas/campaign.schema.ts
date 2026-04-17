@@ -99,6 +99,16 @@ export class Campaign {
   @Prop({ type: BankInfoSchema, required: false })
   bankInfo?: BankInfo;
 
+  @ApiProperty({
+    description:
+      'SePay API Key riêng của campaign (lấy từ https://sepay.vn → Dashboard → API Key). ' +
+      'Ưu tiên cao nhất khi polling — dùng nếu campaign có TK nhận tiền riêng biệt với Org/User.',
+    required: false,
+    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
+  })
+  @Prop({ required: false, select: false })
+  sepayApiKey?: string;
+
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;
 
