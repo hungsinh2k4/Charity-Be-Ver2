@@ -81,15 +81,4 @@ export class UpdateOrganizationDto {
   @Type(() => BankInfoDto)
   @IsOptional()
   bankInfo?: BankInfoDto;
-
-  @ApiProperty({
-    description:
-      'SePay API Key riêng của tổ chức (lấy từ https://sepay.vn → Dashboard → API Key). ' +
-      'Cho phép hệ thống tự động polling xác nhận chuyển khoản mà không cần cấu hình toàn cục.',
-    required: false,
-    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
-  })
-  @IsString()
-  @IsOptional()
-  sepayApiKey?: string;
 }

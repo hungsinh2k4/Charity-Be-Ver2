@@ -68,17 +68,6 @@ export class OrganizationsService {
     return organization;
   }
 
-  /**
-   * Tìm org và kèm theo sepayApiKey (field có select:false).
-   * CHỈ dùng nội bộ (polling service) — không expose ra API response.
-   */
-  async findByIdWithApiKey(id: string): Promise<OrganizationDocument | null> {
-    return this.organizationModel
-      .findById(id)
-      .select('+sepayApiKey')
-      .exec();
-  }
-
   async findByUser(userId: string): Promise<OrganizationDocument[]> {
     return this.organizationModel
       .find({ userId: new Types.ObjectId(userId), isDeleted: false })

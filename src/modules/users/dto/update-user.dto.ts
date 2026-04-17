@@ -43,14 +43,4 @@ export class UpdateUserDto {
   @IsOptional()
   bankInfo?: BankInfoDto;
 
-  @ApiProperty({
-    description:
-      'SePay API Key cá nhân (lấy từ https://sepay.vn → Dashboard → API Key). ' +
-      'Dùng khi tự tạo campaign không qua tổ chức nào.',
-    required: false,
-    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
-  })
-  @IsString()
-  @IsOptional()
-  sepayApiKey?: string;
 }

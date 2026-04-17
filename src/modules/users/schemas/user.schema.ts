@@ -75,16 +75,6 @@ export class User {
   @Prop({ type: BankInfoSchema, required: false })
   bankInfo?: BankInfo;
 
-  @ApiProperty({
-    description:
-      'SePay API Key cá nhân (lấy từ https://sepay.vn → Dashboard → API Key). ' +
-      'Dùng khi user tự tạo campaign không qua tổ chức nào.',
-    required: false,
-    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
-  })
-  @Prop({ required: false, select: false })
-  sepayApiKey?: string;
-
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;
 
