@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Role, VerificationStatus } from '../../../common/enums';
 import { ApiProperty } from '@nestjs/swagger';
-import { BankInfo, BankInfoSchema } from '../../organizations/schemas/organization.schema';
 
 export type UserDocument = User & Document;
 
@@ -70,10 +69,6 @@ export class User {
   @ApiProperty({ description: 'User address', example: 'Hà Nội' })
   @Prop()
   address?: string;
-
-  @ApiProperty({ description: 'Thông tin ngân hàng để nhận donate (VietQR)', required: false, type: () => BankInfo })
-  @Prop({ type: BankInfoSchema, required: false })
-  bankInfo?: BankInfo;
 
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;

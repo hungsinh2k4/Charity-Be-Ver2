@@ -41,7 +41,6 @@ export class AuthService {
       name: registerDto.name,
       phone: registerDto.phone,
       address: registerDto.address,
-      ...(registerDto.bankInfo ? { bankInfo: registerDto.bankInfo } : {}),
     });
 
     return this.generateTokenResponse(user);

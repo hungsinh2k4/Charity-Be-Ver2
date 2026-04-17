@@ -15,12 +15,6 @@ export class UsersService {
     name: string;
     phone?: string;
     address?: string;
-    bankInfo?: {
-      bankName: string;
-      bankBin: string;
-      accountNumber: string;
-      accountName: string;
-    };
   }) {
     const user = new this.userModel(userData);
     return user.save();

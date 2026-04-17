@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { BankInfoDto } from '../../../common/dto/bank-info.dto';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiProperty({ description: 'User full name', required: false })
@@ -32,15 +30,4 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   address?: string;
-
-  @ApiProperty({
-    description: 'Thông tin tài khoản ngân hàng để nhận donate qua QR VietQR (cho user tự tạo campaign)',
-    required: false,
-    type: () => BankInfoDto,
-  })
-  @ValidateNested()
-  @Type(() => BankInfoDto)
-  @IsOptional()
-  bankInfo?: BankInfoDto;
-
 }
