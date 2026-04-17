@@ -34,17 +34,6 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
-  /**
-   * Tìm user kèm sepayApiKey (field có select:false).
-   * CHỈ dùng nội bộ (polling service) — không expose ra API response.
-   */
-  async findByIdWithApiKey(id: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findById(id)
-      .select('+sepayApiKey')
-      .exec();
-  }
-
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().select('-passwordHash').exec();
   }

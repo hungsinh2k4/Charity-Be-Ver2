@@ -56,13 +56,17 @@ export class DonationsController {
   @ApiOperation({
     summary: '[DEBUG] Test Sepay API key — kiểm tra key có hoạt động không',
     description:
-      'Gọi Sepay API với account_number từ query param, trả về 5 GD gần nhất. ' +
-      'Nếu thấy lệnh "transactions", key hoạt động tốt.',
+      'Gọi Sepay API với sepayApiKey và accountNumber, trả về 5 GD gần nhất. ' +
+      'Nếu thấy danh sách "transactions", key hoạt động tốt.',
   })
   @ApiQuery({ name: 'accountNumber', required: true, description: 'Số TK ngân hàng đã liên kết Sepay' })
+  @ApiQuery({ name: 'sepayApiKey', required: true, description: 'Sepay API key từ Dashboard Sepay' })
   @ApiResponse({ status: 200, description: 'Kết quả từ Sepay API' })
-  async debugSepayPing(@Query('accountNumber') accountNumber: string) {
-    return this.vietqrPaymentService.pingCheck(accountNumber);
+  async debugSepayPing(
+    @Query('accountNumber') accountNumber: string,
+    @Query('sepayApiKey') sepayApiKey: string,
+  ) {
+    return this.vietqrPaymentService.pingCheck(accountNumber, sepayApiKey);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
