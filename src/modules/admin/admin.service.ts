@@ -34,9 +34,9 @@ export class AdminService {
         total: allOrganizations.length,
       },
       campaigns: {
-        total: allCampaigns.length,
-        active: allCampaigns.filter((c) => c.isActive).length,
-        verified: allCampaigns.filter(
+        total: allCampaigns.meta.total,
+        active: allCampaigns.data.filter((c) => c.isActive).length,
+        verified: allCampaigns.data.filter(
           (c) => c.verificationStatus === 'VERIFIED',
         ).length,
       },

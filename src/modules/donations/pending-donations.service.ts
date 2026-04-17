@@ -546,7 +546,8 @@ export class PendingDonationsService {
   }
 
   /**
-   * Resolve bank info từ Campaign → Org → User creator.
+   * Resolve bank info từ Campaign.
+   * BankInfo is now only stored at Campaign level.
    */
   private async resolveBankInfo(
     campaign: any,
@@ -558,25 +559,6 @@ export class PendingDonationsService {
     bankName?: string;
   } | null> {
     if (campaign.bankInfo?.bankBin) return campaign.bankInfo;
-
-    if (campaign.organizationId) {
-      const orgId = extractIdStr(campaign.organizationId);
-      if (orgId) {
-        try {
-          const org = await this.organizationsService.findById(orgId);
-          if (org.bankInfo?.bankBin) return org.bankInfo;
-        } catch { }
-      }
-    }
-
-    const creatorId = extractIdStr(campaign.creatorId);
-    if (creatorId) {
-      try {
-        const creator = await this.usersService.findById(creatorId);
-        if ((creator as any).bankInfo?.bankBin) return (creator as any).bankInfo;
-      } catch { }
-    }
-
     return null;
   }
 }
