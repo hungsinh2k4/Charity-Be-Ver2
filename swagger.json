@@ -576,9 +576,215 @@
     {
       "name": "Admin",
       "description": "Administrative endpoints"
+    },
+    {
+      "name": "Blogs",
+      "description": "Blog post management endpoints"
     }
   ],
   "paths": {
+    "/blogs": {
+      "post": {
+        "tags": ["Blogs"],
+        "summary": "Create a new blog post (admin only)",
+        "operationId": "createBlog",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content"],
+                "properties": {
+                  "title": { "type": "string", "example": "Blog Post Title" },
+                  "content": { "type": "string", "example": "Blog content here..." },
+                  "excerpt": { "type": "string", "example": "Short excerpt..." },
+                  "coverImage": { "type": "string", "example": "https://example.com/image.jpg" },
+                  "tags": { "type": "array", "items": { "type": "string" } },
+                  "category": { "type": "string", "example": "News" },
+                  "isPublished": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Blog created successfully" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin role required" }
+        }
+      },
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "List all blog posts with pagination",
+        "operationId": "findAllBlogs",
+        "parameters": [
+          { "name": "page", "in": "query", "required": false, "schema": { "type": "number", "default": 1 } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "number", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Returns paginated list of blog posts" }
+        }
+      }
+    },
+    "/blogs/{id}": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Get blog post by ID with full content",
+        "operationId": "findOneBlog",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Returns blog post details" },
+          "404": { "description": "Blog not found" }
+        }
+      },
+      "patch": {
+        "tags": ["Blogs"],
+        "summary": "Update blog post (admin only)",
+        "operationId": "updateBlog",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "excerpt": { "type": "string" },
+                  "coverImage": { "type": "string" },
+                  "tags": { "type": "array", "items": { "type": "string" } },
+                  "category": { "type": "string" },
+                  "isPublished": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Blog updated successfully" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin role required" }
+        }
+      },
+      "delete": {
+        "tags": ["Blogs"],
+        "summary": "Delete blog post (soft delete, admin only)",
+        "operationId": "deleteBlog",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Blog deleted successfully" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin role required" }
+        }
+      }
+    },
+    "/verification/request": {
+      "post": {
+        "tags": ["Verification"],
+        "summary": "Submit a verification request",
+        "operationId": "createVerificationRequest",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["user", "organization", "campaign"], "example": "user" },
+                  "entityId": { "type": "string", "description": "ID of entity to verify (optional for user)" },
+                  "documents": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Verification request created" },
+          "400": { "description": "Pending request already exists" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/verification/requests": {
+      "get": {
+        "tags": ["Verification"],
+        "summary": "Get all verification requests (Admin/Auditor)",
+        "operationId": "findAllVerificationRequests",
+        "security": [{ "bearer": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["pending", "approved", "rejected"] } }
+        ],
+        "responses": {
+          "200": { "description": "Returns list of verification requests" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin/Auditor role required" }
+        }
+      }
+    },
+    "/verification/requests/{id}": {
+      "get": {
+        "tags": ["Verification"],
+        "summary": "Get verification request by ID (Admin/Auditor)",
+        "operationId": "findOneVerificationRequest",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Returns verification request details" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin/Auditor role required" }
+        }
+      }
+    },
+    "/verification/requests/{id}/process": {
+      "post": {
+        "tags": ["Verification"],
+        "summary": "Approve or reject a verification request (Admin only)",
+        "operationId": "processVerificationRequest",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status", "reason"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["approved", "rejected"], "example": "approved" },
+                  "reason": { "type": "string", "example": "Documents verified successfully" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Verification request processed" },
+          "400": { "description": "Request already processed" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin role required" }
+        }
+      }
+    },
+    "/verification/stats": {
+      "get": {
+        "tags": ["Verification"],
+        "summary": "Get verification statistics (Admin/Auditor)",
+        "operationId": "getVerificationStats",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": { "description": "Returns verification statistics" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Admin/Auditor role required" }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health check",
@@ -727,6 +933,121 @@
           "401": {
             "description": "Invalid credentials"
           }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user profile",
+        "operationId": "getProfile",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": { "description": "Returns current user profile" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update current user profile",
+        "operationId": "updateProfile",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateUserDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated successfully" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/users/request-verification": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Request user verification (submit identity document and selfie)",
+        "operationId": "requestUserVerification",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "documentType": { "type": "string", "example": "identity_card" },
+                  "documentNumber": { "type": "string", "example": "012345678" },
+                  "documentFront": { "type": "string", "description": "URL to front image" },
+                  "documentBack": { "type": "string", "description": "URL to back image" },
+                  "selfie": { "type": "string", "description": "URL to selfie image" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Verification request submitted successfully" },
+          "400": { "description": "Already verified or verification already pending" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/users/pending-verifications": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "[Auditor] Get all users with pending verification",
+        "operationId": "getPendingVerifications",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": { "description": "Returns list of users pending verification" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Auditor role required" }
+        }
+      }
+    },
+    "/users/{id}/verification-details": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "[Auditor] Get user verification details including documents",
+        "operationId": "getVerificationDetails",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Returns user verification details" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Auditor role required" }
+        }
+      }
+    },
+    "/users/{id}/verification-status": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "[Auditor] Approve or reject user verification",
+        "operationId": "updateUserVerificationStatus",
+        "security": [{ "bearer": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["unverified", "pending", "verified", "rejected"], "example": "verified" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Verification status updated" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Auditor role required" }
         }
       }
     },
