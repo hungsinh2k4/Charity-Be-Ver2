@@ -12,6 +12,7 @@ import { DonationsModule } from './modules/donations/donations.module';
 import { VerificationModule } from './modules/verification/verification.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
+import { BlogsModule } from './modules/blogs/blogs.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     DonationsModule,
     VerificationModule,
     AdminModule,
+    BlogsModule,
   ],
 })
 export class AppModule {}
