@@ -36,11 +36,14 @@ COPY --from=builder /app/dist ./dist
 # Copy wallet setup script (dùng khi cần enroll)
 COPY src/modules/blockchain/fabric/wallet-setup.js ./src/modules/blockchain/fabric/wallet-setup.js
 
+# Tạo thư mục wallet
+# RUN mkdir -p wallet
+
 # Copy fabric connection profile template
 COPY fabric/ ./fabric/
 
-# Tạo thư mục wallet
-RUN mkdir -p wallet
+# Copy wallet (được enroll từ Fabric CA trên VM)
+COPY fabric/wallet-deploy/ ./wallet/
 
 # Non-root user (bảo mật)
 RUN addgroup -g 1001 -S nodejs && \
@@ -58,4 +61,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 
 # Start với dumb-init
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main"]
+CMD ["node", "--openssl-legacy-provider", "dist/main"]

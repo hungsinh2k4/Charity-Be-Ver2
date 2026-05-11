@@ -96,8 +96,10 @@ export class BlockchainService implements OnModuleInit, OnModuleDestroy {
 
       // Load connection profile - hỗ trợ cả relative path lẫn UNC path (\\wsl.localhost\...)
       const resolvedProfile = connectionProfilePath.startsWith('\\\\')
-        ? connectionProfilePath  // UNC path - dùng nguyên
-        : path.resolve(connectionProfilePath);  // relative path - resolve
+        ? connectionProfilePath
+        : connectionProfilePath.startsWith('/')
+          ? connectionProfilePath  // absolute Unix path inside container
+          : path.resolve(connectionProfilePath);
 
       if (!fs.existsSync(resolvedProfile)) {
         throw new Error(
@@ -128,10 +130,11 @@ export class BlockchainService implements OnModuleInit, OnModuleDestroy {
       this.gateway = new Gateway();
       // asLocalhost=true cho local dev (localhost), false cho Docker (host.docker.internal)
       const asLocalhost = process.env.FABRIC_AS_LOCALHOST !== 'false';
+      const discoveryEnabled = process.env.FABRIC_DISCOVERY_ENABLED !== 'false';
       await this.gateway.connect(ccp, {
         wallet,
         identity: userId,
-        discovery: { enabled: true, asLocalhost },
+        discovery: { enabled: discoveryEnabled, asLocalhost },
       });
 
       // Lấy contract
