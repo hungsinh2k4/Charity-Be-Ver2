@@ -95,7 +95,7 @@ export class PendingDonation {
 
 export const PendingDonationSchema = SchemaFactory.createForClass(PendingDonation);
 
-PendingDonationSchema.index({ transferCode: 1 }, { unique: true });
+// transferCode already has a unique index from @Prop({ unique: true }).
 PendingDonationSchema.index({ status: 1 });
 PendingDonationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index: tự xóa sau khi hết hạn
 PendingDonationSchema.index({ campaignId: 1 });

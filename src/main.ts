@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { setupSwagger } from './swagger';
 import './polyfills';
 
 async function bootstrap() {
@@ -24,50 +24,7 @@ async function bootstrap() {
   });
 
   // Swagger/OpenAPI Documentation
-  const config = new DocumentBuilder()
-    .setTitle('Transparent Donation System API')
-    .setDescription(
-      `
-## Overview
-A blockchain-enabled donation platform ensuring transparency, auditability, and immutability.
-
-## Features
-- **User Management**: Registration, authentication, and verification
-- **Organization Management**: CRUD with blockchain recording
-- **Campaign Management**: Create and manage fundraising campaigns
-- **Donations**: Anonymous donation support with blockchain verification
-- **Verification System**: Multi-level verification for users, organizations, and campaigns
-- **Audit Trail**: Complete blockchain-backed audit history
-
-## Authentication
-Most endpoints require JWT authentication. Include the token in the Authorization header:
-\`\`\`
-Authorization: Bearer <your-jwt-token>
-\`\`\`
-
-## Roles
-- **USER**: Standard user account
-- **ADMIN**: Full administrative access
-- **AUDITOR**: Read-only access to verification and audit data
-      `,
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('Auth', 'Authentication endpoints')
-    .addTag('Users', 'User management endpoints')
-    .addTag('Organizations', 'Organization management endpoints')
-    .addTag('Campaigns', 'Campaign management endpoints')
-    .addTag('Donations', 'Donation endpoints (public)')
-    .addTag('Verification', 'Verification request endpoints')
-    .addTag('Admin', 'Administrative endpoints')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  setupSwagger(app);
 
   // Health check endpoint (dùng cho Docker healthcheck)
   const httpAdapter = app.getHttpAdapter();

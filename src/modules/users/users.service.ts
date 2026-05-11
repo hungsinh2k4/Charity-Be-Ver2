@@ -100,7 +100,7 @@ export class UsersService {
   }
 
   /**
-   * Get all users with pending verification (for auditor)
+   * Get all users with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<UserDocument[]> {
     return this.userModel
@@ -110,7 +110,7 @@ export class UsersService {
   }
 
   /**
-   * Get user verification details by ID (for auditor)
+   * Get user verification details by ID (for moderator)
    */
   async getVerificationDetails(userId: string): Promise<UserDocument | null> {
     return this.userModel

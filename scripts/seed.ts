@@ -13,7 +13,7 @@ interface UserDoc {
     email: string;
     passwordHash: string;
     name: string;
-    role: 'USER' | 'ADMIN' | 'AUDITOR';
+    role: 'USER' | 'MODERATOR' | 'ADMIN' | 'AUDITOR';
     verificationStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
     verifiedAt?: Date;
     identityDocument?: string;
@@ -84,7 +84,7 @@ interface DonationDoc {
 
 interface VerificationRequestDoc {
     _id: ObjectId;
-    entityType: 'USER' | 'CAMPAIGN';
+    entityType: 'USER' | 'ORGANIZATION' | 'CAMPAIGN';
     entityId: ObjectId;
     requesterId: ObjectId;
     status: 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -400,6 +400,46 @@ async function seed() {
                 address: 'Thừa Thiên Huế, Việt Nam',
                 createdAt: new Date('2024-12-19'),
                 updatedAt: new Date('2024-12-19'),
+            },
+            {
+                _id: new ObjectId(),
+                email: 'moderator@charity.com',
+                passwordHash,
+                name: 'Moderator User',
+                role: 'MODERATOR',
+                verificationStatus: 'VERIFIED',
+                verifiedAt: new Date('2024-01-20'),
+                phone: '0901234569',
+                address: 'Ha Noi, Viet Nam',
+                createdAt: new Date('2024-01-20'),
+                updatedAt: new Date('2024-01-20'),
+            },
+            {
+                _id: new ObjectId(),
+                email: 'user.unverified@charity.com',
+                passwordHash,
+                name: 'Unverified User',
+                role: 'USER',
+                verificationStatus: 'UNVERIFIED',
+                phone: '0901111222',
+                address: 'Ha Noi, Viet Nam',
+                createdAt: new Date('2024-12-20'),
+                updatedAt: new Date('2024-12-20'),
+            },
+            {
+                _id: new ObjectId(),
+                email: 'user.rejected@charity.com',
+                passwordHash,
+                name: 'Rejected User',
+                role: 'USER',
+                verificationStatus: 'REJECTED',
+                identityDocument: 'https://storage.example.com/docs/cccd-rejected-user.jpg',
+                selfieWithDocument: 'https://storage.example.com/docs/selfie-rejected-user.jpg',
+                verificationNote: 'Ho so bi tu choi de test UI nop lai xac minh',
+                phone: '0901111333',
+                address: 'TP.HCM, Viet Nam',
+                createdAt: new Date('2024-12-21'),
+                updatedAt: new Date('2024-12-21'),
             },
         ];
 
@@ -1094,11 +1134,42 @@ async function seed() {
                 status: 'APPROVED',
                 documents: ['https://example.com/verified-id.jpg'],
                 notes: 'Yêu cầu xác minh cho tài khoản nhà hảo tâm.',
-                reviewedBy: users[0]._id, // reviewed by admin
+                reviewedBy: users[20]._id, // reviewed by moderator
                 reviewNotes: 'Tất cả tài liệu đã được xác minh. Chấp thuận.',
                 reviewedAt: new Date('2024-05-02'),
                 createdAt: new Date('2024-05-01'),
                 updatedAt: new Date('2024-05-02'),
+            },
+            {
+                _id: new ObjectId(),
+                entityType: 'ORGANIZATION',
+                entityId: organizations[3]._id, // Health Hope (PENDING)
+                requesterId: users[5]._id,
+                status: 'PENDING',
+                documents: [
+                    'https://example.com/healthhope-license.pdf',
+                    'https://example.com/healthhope-legal-representative.pdf'
+                ],
+                notes: 'Yeu cau xac minh to chuc de co the quan ly chien dich gay quy.',
+                createdAt: new Date('2024-11-02'),
+                updatedAt: new Date('2024-11-02'),
+            },
+            {
+                _id: new ObjectId(),
+                entityType: 'ORGANIZATION',
+                entityId: organizations[0]._id, // Helping Hands (VERIFIED)
+                requesterId: users[2]._id,
+                status: 'APPROVED',
+                documents: [
+                    'https://example.com/helpinghands-license.pdf',
+                    'https://example.com/helpinghands-tax-code.pdf'
+                ],
+                notes: 'Yeu cau xac minh to chuc da duoc phe duyet.',
+                reviewedBy: users[20]._id,
+                reviewNotes: 'Ho so phap ly hop le. Chap thuan xac minh to chuc.',
+                reviewedAt: new Date('2024-02-02'),
+                createdAt: new Date('2024-02-01'),
+                updatedAt: new Date('2024-02-02'),
             },
             {
                 _id: new ObjectId(),
@@ -1126,7 +1197,7 @@ async function seed() {
                     'https://example.com/partner-agreements.pdf'
                 ],
                 notes: 'Yêu cầu xác minh cho dự án nước sạch.',
-                reviewedBy: users[1]._id, // reviewed by auditor
+                reviewedBy: users[20]._id, // reviewed by moderator
                 reviewNotes: 'Tài liệu xuất sắc. Dự án hợp pháp và có kế hoạch tốt. Chấp thuận.',
                 reviewedAt: new Date('2024-03-05'),
                 createdAt: new Date('2024-03-02'),
@@ -1140,7 +1211,7 @@ async function seed() {
                 status: 'REJECTED',
                 documents: ['https://example.com/proposal.pdf'],
                 notes: 'Yêu cầu xác minh cho chương trình sức khỏe tâm thần.',
-                reviewedBy: users[1]._id,
+                reviewedBy: users[20]._id,
                 reviewNotes: 'Thiếu tài liệu về bằng cấp và chứng chỉ. Từ chối.',
                 reviewedAt: new Date('2024-10-10'),
                 createdAt: new Date('2024-10-05'),
@@ -1177,8 +1248,13 @@ async function seed() {
         console.log('═══════════════════════════════════════════');
         console.log('\n📝 Test Accounts:');
         console.log('   Admin: admin@charity.com / Admin123!');
+        console.log('   Moderator: moderator@charity.com / Password123!');
         console.log('   Auditor: auditor@charity.com / Password123!');
         console.log('   Org User: org1@helpinghands.org / Password123!');
+        console.log('   Verified User: donor1@gmail.com / Password123!');
+        console.log('   Pending User: pending@example.com / Password123!');
+        console.log('   Unverified User: user.unverified@charity.com / Password123!');
+        console.log('   Rejected User: user.rejected@charity.com / Password123!');
         console.log('═══════════════════════════════════════════\n');
 
     } catch (error) {

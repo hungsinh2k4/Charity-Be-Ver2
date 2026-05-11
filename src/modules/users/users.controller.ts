@@ -67,14 +67,14 @@ export class UsersController {
     return this.usersService.requestVerification(user.userId, dto);
   }
 
-  // ==================== AUDITOR ENDPOINTS ====================
+  // ==================== MODERATOR ENDPOINTS ====================
 
   @Get('pending-verifications')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Get all users with pending verification',
+    summary: '[Moderator] Get all users with pending verification',
   })
   @ApiResponse({
     status: 200,
@@ -86,10 +86,10 @@ export class UsersController {
 
   @Get(':id/verification-details')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Get user verification details including documents',
+    summary: '[Moderator] Get user verification details including documents',
   })
   @ApiResponse({
     status: 200,
@@ -101,9 +101,9 @@ export class UsersController {
 
   @Patch(':id/verification-status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
-  @ApiOperation({ summary: '[Auditor] Approve or reject user verification' })
+  @ApiOperation({ summary: '[Moderator] Approve or reject user verification' })
   @ApiResponse({ status: 200, description: 'Verification status updated' })
   async updateVerificationStatus(
     @Param('id') id: string,

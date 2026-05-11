@@ -61,10 +61,10 @@ export class OrganizationsController {
 
   @Get('pending-verifications')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Get all organizations with pending verification',
+    summary: '[Moderator] Get all organizations with pending verification',
   })
   @ApiResponse({
     status: 200,
@@ -151,10 +151,10 @@ export class OrganizationsController {
 
   @Patch(':id/verification-status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Approve or reject organization verification',
+    summary: '[Moderator] Approve or reject organization verification',
   })
   @ApiResponse({ status: 200, description: 'Verification status updated' })
   async updateVerificationStatus(

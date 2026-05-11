@@ -18,7 +18,7 @@ export class AdminController {
   constructor(private adminService: AdminService) {}
 
   @Get('dashboard')
-  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Get admin dashboard statistics' })
   @ApiResponse({ status: 200, description: 'Returns dashboard statistics' })
   async getDashboardStats() {

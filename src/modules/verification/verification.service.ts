@@ -16,6 +16,7 @@ import {
   VerificationStatus,
 } from '../../common/enums';
 import { UsersService } from '../users/users.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 import { CampaignsService } from '../campaigns/campaigns.service';
 
 @Injectable()
@@ -24,6 +25,7 @@ export class VerificationService {
     @InjectModel(VerificationRequest.name)
     private verificationModel: Model<VerificationRequestDocument>,
     private usersService: UsersService,
+    private organizationsService: OrganizationsService,
     private campaignsService: CampaignsService,
   ) {}
 
@@ -95,7 +97,7 @@ export class VerificationService {
   async processRequest(
     id: string,
     processDto: ProcessVerificationDto,
-    adminId: string,
+    reviewerId: string,
   ): Promise<VerificationRequestDocument> {
     const request = await this.findById(id);
 
@@ -118,18 +120,25 @@ export class VerificationService {
           verificationStatus,
         );
         break;
+      case EntityType.ORGANIZATION:
+        await this.organizationsService.updateVerificationStatus(
+          request.entityId.toString(),
+          verificationStatus,
+          reviewerId,
+        );
+        break;
       case EntityType.CAMPAIGN:
         await this.campaignsService.updateVerificationStatus(
           request.entityId.toString(),
           verificationStatus,
-          adminId,
+          reviewerId,
         );
         break;
     }
 
     // Update the request
     request.status = newStatus;
-    request.reviewedBy = new Types.ObjectId(adminId);
+    request.reviewedBy = new Types.ObjectId(reviewerId);
     request.reviewNotes = processDto.reviewNotes;
     request.reviewedAt = new Date();
 

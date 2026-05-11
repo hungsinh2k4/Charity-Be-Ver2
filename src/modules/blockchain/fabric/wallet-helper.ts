@@ -12,10 +12,13 @@ import { Wallets } from 'fabric-network';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CONNECTION_PROFILE_PATH = path.resolve(
-    __dirname,
-    '../../../../fabric/connection-profile.json',
-);
+const configuredConnectionProfile =
+    process.env.FABRIC_CA_CONNECTION_PROFILE ||
+    process.env.FABRIC_CONNECTION_PROFILE ||
+    './fabric/connection-profile-local.json';
+const CONNECTION_PROFILE_PATH = path.isAbsolute(configuredConnectionProfile)
+    ? configuredConnectionProfile
+    : path.resolve(process.cwd(), configuredConnectionProfile);
 const WALLET_PATH = path.resolve(process.cwd(), 'wallet');
 const CA_NAME = process.env.FABRIC_CA_NAME || 'ca-org1';
 const ADMIN_USER = process.env.FABRIC_ADMIN_USER || 'admin';
