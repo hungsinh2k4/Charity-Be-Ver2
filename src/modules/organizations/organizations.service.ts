@@ -140,7 +140,7 @@ export class OrganizationsService {
   }
 
   /**
-   * Update verification status (for admin)
+   * Update verification status (for moderator)
    */
   async updateVerificationStatus(
     id: string,
@@ -176,7 +176,7 @@ export class OrganizationsService {
   }
 
   /**
-   * Get all organizations with pending verification (for auditor)
+   * Get all organizations with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<OrganizationDocument[]> {
     return this.organizationModel

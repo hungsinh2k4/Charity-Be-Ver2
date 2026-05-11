@@ -7,6 +7,7 @@ import {
   VerificationRequestSchema,
 } from './schemas/verification-request.schema';
 import { UsersModule } from '../users/users.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 import { CampaignsModule } from '../campaigns/campaigns.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { CampaignsModule } from '../campaigns/campaigns.module';
       { name: VerificationRequest.name, schema: VerificationRequestSchema },
     ]),
     forwardRef(() => UsersModule),
+    OrganizationsModule,
     forwardRef(() => CampaignsModule),
   ],
   controllers: [VerificationController],

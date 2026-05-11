@@ -28,11 +28,12 @@ MONGODB_URI=mongodb://localhost:27017/charity-db
 
 ## 📊 What Gets Created
 
-### Users (10 total)
+### Users
 - **1 Admin**: `admin@charity.com` (password: `Admin123!`)
 - **1 Auditor**: `auditor@charity.com` (password: `Password123!`)
+- **1 Moderator**: `moderator@charity.com` (password: `Password123!`)
 - **5 Organization Users**: Verified users who manage organizations
-- **3 Regular Users**: Mix of verified and pending status
+- **Regular Users**: Mix of verified, pending, unverified, and rejected status
 
 ### Organizations (5 total)
 - Helping Hands Foundation
@@ -67,9 +68,10 @@ Status distribution:
 - Realistic blockchain transaction IDs
 - Some with messages and subscription preferences
 
-### Verification Requests (6 total)
-- 2 for USER entities (1 pending, 1 approved)
-- 4 for CAMPAIGN entities (2 pending, 1 approved, 1 rejected)
+### Verification Requests
+- USER entities: pending and approved examples
+- ORGANIZATION entities: pending and approved examples
+- CAMPAIGN entities: pending, approved, and rejected examples
 - With realistic documents, notes, and review comments
 
 ## 🔐 Test Accounts
@@ -79,11 +81,15 @@ You can log in with these accounts for testing:
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@charity.com | Admin123! |
+| Moderator | moderator@charity.com | Password123! |
 | Auditor | auditor@charity.com | Password123! |
 | Organization | org1@helpinghands.org | Password123! |
 | Organization | org2@greenfuture.org | Password123! |
 | Organization | org3@educationforall.org | Password123! |
-| Donor | donor1@gmail.com | Password123! |
+| Verified User | donor1@gmail.com | Password123! |
+| Pending User | pending@example.com | Password123! |
+| Unverified User | user.unverified@charity.com | Password123! |
+| Rejected User | user.rejected@charity.com | Password123! |
 
 ## 📁 Database Collections
 

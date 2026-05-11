@@ -28,8 +28,9 @@ import { DonationsQrService } from './donations-qr.service';
 import { PendingDonationsService } from './pending-donations.service';
 import { VietQRPaymentService } from './vietqr-payment.service';
 import { CreateDonationDto } from './dto';
-import { JwtAuthGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import { JwtAuthGuard, OptionalAuthGuard, RolesGuard } from '../auth/guards';
+import { CurrentUser, Roles } from '../auth/decorators';
+import { Role } from '../../common/enums';
 import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Donations')
@@ -51,7 +52,8 @@ export class DonationsController {
    * Chức năng: gọi Sepay API trực tiếp và trả về danh sách GD gần nhất.
    */
   @Get('debug/sepay-ping')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '[DEBUG] Test Sepay API key — kiểm tra key có hoạt động không',
@@ -78,6 +80,7 @@ export class DonationsController {
    * Donation thật CHỈ được tạo sau khi VietQR xác nhận tiền về.
    */
   @Post()
+  @UseGuards(OptionalAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '[BƯỚC 1] Khởi tạo donation — nhận transferCode để chuyển khoản',
@@ -246,7 +249,8 @@ export class DonationsController {
   // ═══════════════════════════════════════════════════════════════════════════
 
   @Post('confirm/:transferCode')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '[ADMIN] Xác nhận donation thủ công theo mã CK',

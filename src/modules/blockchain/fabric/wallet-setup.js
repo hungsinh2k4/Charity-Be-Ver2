@@ -17,7 +17,8 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../../.env') });
 
 // wallet-setup.js chạy từ WSL nên dùng connection-org1.json trực tiếp từ test-network
-const CONN_PROFILE_WSL = process.env.FABRIC_CA_CONNECTION_PROFILE ||
+const CONN_PROFILE = process.env.FABRIC_CA_CONNECTION_PROFILE ||
+    process.env.FABRIC_CONNECTION_PROFILE ||
     `${process.env.HOME}/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/connection-org1.json`;
 
 // Fallback về file cũ nếu cần
@@ -36,12 +37,15 @@ async function main() {
     console.log('─────────────────────────────────────────');
 
     // 1. Load connection profile
-    let ccpPath = CONN_PROFILE_WSL;
+    let ccpPath = CONN_PROFILE;
+    if (!path.isAbsolute(ccpPath)) {
+        ccpPath = path.resolve(process.cwd(), ccpPath);
+    }
     if (!fs.existsSync(ccpPath)) {
         ccpPath = CONN_PROFILE_FALLBACK;
         if (!fs.existsSync(ccpPath)) {
             console.error(`❌ Không tìm thấy connection profile:`);
-            console.error(`   ${CONN_PROFILE_WSL}`);
+            console.error(`   ${CONN_PROFILE}`);
             console.error(`   ${CONN_PROFILE_FALLBACK}`);
             process.exit(1);
         }

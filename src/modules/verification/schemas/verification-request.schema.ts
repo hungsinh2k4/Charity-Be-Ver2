@@ -41,13 +41,13 @@ export class VerificationRequest {
   notes?: string;
 
   @ApiProperty({
-    description: 'Admin/Auditor who reviewed the request',
+    description: 'Moderator who reviewed the request',
     required: false,
   })
   @Prop({ type: Types.ObjectId, ref: 'User' })
   reviewedBy?: Types.ObjectId;
 
-  @ApiProperty({ description: 'Review comments from admin', required: false })
+  @ApiProperty({ description: 'Review comments from moderator', required: false })
   @Prop()
   reviewNotes?: string;
 

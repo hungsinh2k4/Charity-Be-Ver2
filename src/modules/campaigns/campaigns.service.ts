@@ -228,7 +228,7 @@ export class CampaignsService {
   }
 
   /**
-   * Get all campaigns with pending verification (for auditor)
+   * Get all campaigns with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<CampaignDocument[]> {
     return this.campaignModel

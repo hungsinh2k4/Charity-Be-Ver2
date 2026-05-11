@@ -86,14 +86,14 @@ export class CampaignsController {
     return this.campaignsService.findByCreator(user.userId);
   }
 
-  // ==================== AUDITOR ENDPOINTS ====================
+  // ==================== MODERATOR ENDPOINTS ====================
 
   @Get('pending-verifications')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Get all campaigns with pending verification',
+    summary: '[Moderator] Get all campaigns with pending verification',
   })
   @ApiResponse({
     status: 200,
@@ -142,10 +142,10 @@ export class CampaignsController {
 
   @Patch(':id/verification-status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: '[Auditor] Approve or reject campaign verification',
+    summary: '[Moderator] Approve or reject campaign verification',
   })
   @ApiResponse({
     status: 200,

@@ -41,9 +41,9 @@ export class VerificationController {
 
   @Get('requests')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Roles(Role.MODERATOR, Role.AUDITOR, Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all verification requests (Admin/Auditor)' })
+  @ApiOperation({ summary: 'Get all verification requests (Moderator/Auditor/Admin)' })
   @ApiQuery({ name: 'status', enum: RequestStatus, required: false })
   @ApiResponse({
     status: 200,
@@ -55,9 +55,9 @@ export class VerificationController {
 
   @Get('requests/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Roles(Role.MODERATOR, Role.AUDITOR, Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get verification request by ID (Admin/Auditor)' })
+  @ApiOperation({ summary: 'Get verification request by ID (Moderator/Auditor/Admin)' })
   @ApiResponse({
     status: 200,
     description: 'Returns verification request details',
@@ -68,10 +68,10 @@ export class VerificationController {
 
   @Post('requests/:id/process')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.MODERATOR)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Approve or reject a verification request (Admin only)',
+    summary: 'Approve or reject a verification request (Moderator only)',
   })
   @ApiResponse({ status: 200, description: 'Verification request processed' })
   @ApiResponse({ status: 400, description: 'Request already processed' })
@@ -85,9 +85,9 @@ export class VerificationController {
 
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.AUDITOR)
+  @Roles(Role.MODERATOR, Role.AUDITOR, Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get verification statistics (Admin/Auditor)' })
+  @ApiOperation({ summary: 'Get verification statistics (Moderator/Auditor/Admin)' })
   @ApiResponse({ status: 200, description: 'Returns verification statistics' })
   async getStats() {
     return this.verificationService.getStats();
