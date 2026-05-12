@@ -940,6 +940,8 @@
                   "example": {
                     "status": "waiting_payment | checking | payment_confirmed | expired",
                     "transferCode": "DONAB12CD",
+                    "trackingCode": "DONAB12CD",
+                    "trackingUrl": "/donations/track/DONAB12CD",
                     "amount": 100000,
                     "expiresAt": "2026-03-18T16:30:00Z",
                     "donationId": "60c72b2f9b1d8e001c8e4b5a"
@@ -1034,6 +1036,35 @@
           }
         ],
         "summary": "[ADMIN] Xác nhận donation thủ công theo mã CK",
+        "tags": [
+          "Donations"
+        ]
+      }
+    },
+    "/donations/track/{trackingCode}": {
+      "get": {
+        "description": "User dùng trackingCode được trả về sau khi donate thành công để xem trạng thái donation.",
+        "operationId": "DonationsController_trackByCode",
+        "parameters": [
+          {
+            "name": "trackingCode",
+            "required": true,
+            "in": "path",
+            "description": "Mã theo dõi donation, ví dụ DONAB12CD",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin donation"
+          },
+          "404": {
+            "description": "Không tìm thấy mã"
+          }
+        },
+        "summary": "Theo dõi donation theo mã theo dõi",
         "tags": [
           "Donations"
         ]

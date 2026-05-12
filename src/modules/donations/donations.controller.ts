@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -162,6 +163,8 @@ export class DonationsController {
       example: {
         status: 'waiting_payment | checking | payment_confirmed | expired',
         transferCode: 'DONAB12CD',
+        trackingCode: 'DONAB12CD',
+        trackingUrl: '/donations/track/DONAB12CD',
         amount: 100000,
         expiresAt: '2026-03-18T16:30:00Z',
         donationId: '60c72b2f9b1d8e001c8e4b5a',
@@ -177,9 +180,12 @@ export class DonationsController {
       return {
         status: pending.status,
         transferCode: pending.transferCode,
+        trackingCode: pending.transferCode,
+        trackingUrl: `/donations/track/${pending.transferCode}`,
         amount: pending.amount,
         donationId: donation?._id ?? null,
         paidAt: (donation as any)?.paidAt ?? null,
+        message: `Donate thành công. Mã theo dõi của bạn là ${pending.transferCode}.`,
       };
     }
 
@@ -196,6 +202,8 @@ export class DonationsController {
     return {
       status: pending.status,
       transferCode: pending.transferCode,
+      trackingCode: pending.transferCode,
+      trackingUrl: `/donations/track/${pending.transferCode}`,
       amount: pending.amount,
       expiresAt: pending.expiresAt,
       remainingSeconds: Math.max(
@@ -283,6 +291,19 @@ export class DonationsController {
   // TRA CỨU
   // ═══════════════════════════════════════════════════════════════════════════
 
+  @Get('track/:trackingCode')
+  @ApiOperation({
+    summary: 'Theo dõi donation theo mã theo dõi',
+    description:
+      'User dùng trackingCode được trả về sau khi donate thành công để xem trạng thái donation.',
+  })
+  @ApiParam({ name: 'trackingCode', description: 'Mã theo dõi donation, ví dụ DONAB12CD' })
+  @ApiResponse({ status: 200, description: 'Thông tin donation' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy mã' })
+  async trackByCode(@Param('trackingCode') trackingCode: string) {
+    return this.buildDonationTrackingResponse(trackingCode);
+  }
+
   @Get('lookup/:transferCode')
   @ApiOperation({
     summary: 'Tra cứu donation theo mã CK (DON...)',
@@ -292,26 +313,38 @@ export class DonationsController {
   @ApiResponse({ status: 200, description: 'Thông tin donation' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy mã' })
   async lookupByTransferCode(@Param('transferCode') transferCode: string) {
-    // Kiểm tra PendingDonation trước
+    return this.buildDonationTrackingResponse(transferCode);
+  }
+
+  private async buildDonationTrackingResponse(code: string) {
+    try {
+      const donation = await this.donationsService.findByTransferCode(code);
+      return {
+        source: 'confirmed',
+        status: 'confirmed',
+        trackingCode: donation.transferCode,
+        trackingUrl: `/donations/track/${donation.transferCode}`,
+        ...donation.toObject(),
+      };
+    } catch (error) {
+      if (!(error instanceof NotFoundException)) throw error;
+    }
+
     const pending =
-      await this.pendingDonationsService.findPendingByTransferCode(transferCode);
+      await this.pendingDonationsService.findPendingByTransferCode(code);
     if (pending) {
       return {
         source: 'pending',
         status: pending.status,
         transferCode: pending.transferCode,
+        trackingCode: pending.transferCode,
+        trackingUrl: `/donations/track/${pending.transferCode}`,
         amount: pending.amount,
         expiresAt: pending.expiresAt,
       };
     }
 
-    // Tìm trong Donation đã confirmed
-    const donation = await this.donationsService.findByTransferCode(transferCode);
-    return {
-      source: 'confirmed',
-      status: 'confirmed',
-      ...donation.toObject(),
-    };
+    throw new NotFoundException(`Khong tim thay donation voi ma "${code}"`);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
