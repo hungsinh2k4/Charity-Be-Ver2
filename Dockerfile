@@ -12,6 +12,7 @@ RUN npm ci
 
 # Copy source
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Build TypeScript
 RUN npm run build
@@ -61,4 +62,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 
 # Start với dumb-init
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "--openssl-legacy-provider", "dist/main"]
+CMD ["node", "--openssl-legacy-provider", "dist/src/main"]
