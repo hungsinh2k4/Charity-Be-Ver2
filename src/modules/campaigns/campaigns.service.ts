@@ -19,6 +19,22 @@ export class CampaignsService {
     private blockchainService: BlockchainService,
   ) { }
 
+  private getOrganizationOwnerId(organization: {
+    userId: Types.ObjectId | { _id?: Types.ObjectId | string } | string;
+  }): string {
+    const { userId } = organization;
+
+    if (userId instanceof Types.ObjectId) {
+      return userId.toString();
+    }
+
+    if (userId && typeof userId === 'object' && userId._id) {
+      return userId._id.toString();
+    }
+
+    return String(userId);
+  }
+
   async create(
     createDto: CreateCampaignDto,
     creatorId: string,
@@ -30,7 +46,7 @@ export class CampaignsService {
       const organization = await this.organizationsService.findById(
         createDto.organizationId,
       );
-      if (organization.userId.toString() !== creatorId) {
+      if (this.getOrganizationOwnerId(organization) !== creatorId) {
         throw new ForbiddenException(
           'Only organization creator can create campaigns for this organization',
         );

@@ -11,6 +11,8 @@ build/
 .env.*.local
 env.yaml
 deploy-prod.ps1
+gcp-service-account.json
+*-service-account.json
 
 # IDE
 .idea/

@@ -22,6 +22,8 @@ Backend cho hệ thống quyên góp minh bạch, xây bằng **NestJS**, **Mong
 - Auditor xem audit trail, verification history và dữ liệu truy vết.
 - Admin quản trị hệ thống, user role, dashboard và xử lý ngoại lệ.
 - Donation theo luồng pending -> QR -> webhook/polling -> confirmed.
+- Upload giấy tờ xác minh lên Google Cloud Storage private bucket và cấp signed URL tạm thời cho file riêng tư.
+- Dashboard người dùng tổng hợp organization, campaign, donation gần đây và activity đã ghi blockchain.
 - Swagger JSON có thể cập nhật thủ công bằng script riêng.
 
 ## Role Và Phân Quyền
@@ -45,7 +47,8 @@ Backend cho hệ thống quyên góp minh bạch, xây bằng **NestJS**, **Mong
 
 ```text
 User đăng ký
-  -> gửi yêu cầu xác minh danh tính
+  -> upload giấy tờ xác minh qua /uploads/verification
+  -> gửi yêu cầu xác minh danh tính với mảng documents
   -> MODERATOR duyệt USER
   -> user VERIFIED có thể tạo organization/campaign
 
@@ -101,6 +104,27 @@ Health check:
 ```text
 http://localhost:8080/health
 ```
+
+### Google Cloud Storage
+
+Upload giấy tờ xác minh dùng private Google Cloud Storage bucket. `.env` cần có:
+
+```env
+GCS_PROJECT_ID=your-google-cloud-project-id
+GCS_BUCKET_NAME=your-verification-docs-bucket
+```
+
+Service account nên cấu hình qua biến môi trường chuẩn của Google SDK, ví dụ `GOOGLE_APPLICATION_CREDENTIALS`, và file key như `gcp-service-account.json` không được commit.
+
+Luồng FE cho user verification:
+
+```text
+POST /uploads/verification multipart/form-data file=<image/pdf>
+  -> nhận fileKey
+POST /users/request-verification { "documents": ["verification/..."], "verificationNote": "..." }
+```
+
+File upload hỗ trợ JPG, PNG, WebP, PDF và giới hạn 10MB/file. File private có thể lấy signed URL tạm thời qua `GET /uploads/signed-url?fileKey=...`.
 
 ## Local Fabric
 
@@ -180,10 +204,24 @@ npm run swagger:generate
 | --- | --- | --- |
 | GET | `/users/me` | JWT |
 | PATCH | `/users/me` | JWT |
-| POST | `/users/request-verification` | JWT |
+| POST | `/users/request-verification` | JWT, body `documents: string[]` |
 | GET | `/users/pending-verifications` | MODERATOR |
 | GET | `/users/:id/verification-details` | MODERATOR |
 | PATCH | `/users/:id/verification-status` | MODERATOR |
+
+### Uploads
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| POST | `/uploads/verification` | JWT, multipart `file` |
+| GET | `/uploads/signed-url?fileKey=...` | JWT |
+
+### Dashboard
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/dashboard/me?recentLimit=3` | JWT |
+| GET | `/dashboard/blockchain-activity?page=1&limit=10` | Public |
 
 ### Organizations
 
@@ -299,12 +337,15 @@ src/modules/campaigns/          Campaign CRUD and verification
 src/modules/donations/          Donation, pending donation, QR, webhook
 src/modules/verification/       Generic verification request workflow
 src/modules/admin/              Admin and audit endpoints
+src/modules/dashboard/          User dashboard and blockchain activity feed
+src/modules/uploads/            Private verification uploads and signed URLs
 src/modules/blockchain/         Fabric gateway integration
 ```
 
 ## Notes
 
 - `.env` và `.env.local` không được commit.
+- Service account JSON không được commit; dùng `GOOGLE_APPLICATION_CREDENTIALS` hoặc secret của môi trường deploy.
 - `swagger.json` được commit để FE có thể dùng trực tiếp.
 - Admin dashboard có thể hiển thị verification stats như overview, nhưng thao tác duyệt thuộc về Moderator.
 - Auditor chỉ đọc/audit, không approve/reject.

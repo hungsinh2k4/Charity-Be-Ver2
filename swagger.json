@@ -1647,6 +1647,162 @@
           "Blogs"
         ]
       }
+    },
+    "/uploads/verification": {
+      "post": {
+        "operationId": "UploadsController_uploadVerificationDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a verification document to Cloud Storage",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/uploads/signed-url": {
+      "get": {
+        "operationId": "UploadsController_createSignedUrl",
+        "parameters": [
+          {
+            "name": "fileKey",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a temporary signed URL for a private file",
+        "tags": [
+          "Uploads"
+        ]
+      }
+    },
+    "/dashboard/me": {
+      "get": {
+        "description": "Returns summary cards, owned organizations, owned campaigns, recent confirmed donations, and quick actions for the dashboard screen.",
+        "operationId": "DashboardController_getMyDashboard",
+        "parameters": [
+          {
+            "name": "recentLimit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 20
+            },
+            "description": "Number of recent donations to return. Default: 3, max: 20."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard data for the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current user dashboard data",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/dashboard/blockchain-activity": {
+      "get": {
+        "description": "Returns the latest blockchain-backed organization, campaign, and donation records for the dashboard activity feed.",
+        "operationId": "DashboardController_getRecentBlockchainActivity",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number. Default: 1."
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            },
+            "description": "Number of activities to return. Default: 10, max: 50."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated recent blockchain activity feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardBlockchainActivityResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get recent blockchain activity",
+        "tags": [
+          "Dashboard"
+        ]
+      }
     }
   },
   "info": {
@@ -1777,25 +1933,26 @@
       "RequestUserVerificationDto": {
         "type": "object",
         "properties": {
-          "identityDocument": {
-            "type": "string",
-            "description": "Identity document URL (CCCD/Passport image)",
-            "example": "https://storage.example.com/docs/cccd.jpg"
-          },
-          "selfieWithDocument": {
-            "type": "string",
-            "description": "Selfie photo URL holding the identity document",
-            "example": "https://storage.example.com/docs/selfie-with-cccd.jpg"
+          "documents": {
+            "description": "Verification document file keys/URLs",
+            "example": [
+              "verification/user-id/cccd-front.jpg",
+              "verification/user-id/cccd-back.jpg",
+              "verification/user-id/selfie.jpg"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "verificationNote": {
             "type": "string",
             "description": "Additional note for verification (optional)",
-            "example": "Thông tin bổ sung nếu cần"
+            "example": "Additional verification information if needed"
           }
         },
         "required": [
-          "identityDocument",
-          "selfieWithDocument"
+          "documents"
         ]
       },
       "ObjectId": {
@@ -2276,6 +2433,450 @@
             "description": "Full blog content"
           }
         }
+      },
+      "DashboardUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439011"
+          },
+          "name": {
+            "type": "string",
+            "example": "Nguyen Van A"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "example": "VERIFIED"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "verificationStatus"
+        ]
+      },
+      "DashboardOrganizationsSummaryDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 1
+          },
+          "campaignCount": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "count",
+          "campaignCount"
+        ]
+      },
+      "DashboardDonatedSummaryDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 3
+          },
+          "totalAmount": {
+            "type": "number",
+            "example": 15000
+          },
+          "currency": {
+            "type": "string",
+            "example": "VND"
+          }
+        },
+        "required": [
+          "count",
+          "totalAmount",
+          "currency"
+        ]
+      },
+      "DashboardVerificationSummaryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "example": "VERIFIED"
+          },
+          "isVerified": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "status",
+          "isVerified"
+        ]
+      },
+      "DashboardSummaryDto": {
+        "type": "object",
+        "properties": {
+          "organizations": {
+            "$ref": "#/components/schemas/DashboardOrganizationsSummaryDto"
+          },
+          "donated": {
+            "$ref": "#/components/schemas/DashboardDonatedSummaryDto"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/DashboardVerificationSummaryDto"
+          }
+        },
+        "required": [
+          "organizations",
+          "donated",
+          "verification"
+        ]
+      },
+      "DashboardOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439012"
+          },
+          "name": {
+            "type": "string",
+            "example": "Quy Tu Thien Vong Tay Nhan Ai"
+          },
+          "description": {
+            "type": "string",
+            "example": "Tan tam cai thien cuoc song thong qua cac sang kien giao duc va y te tai nong thon Viet Nam."
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "example": "VERIFIED"
+          },
+          "campaignCount": {
+            "type": "number",
+            "example": 2
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-12T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "verificationStatus",
+          "campaignCount",
+          "createdAt"
+        ]
+      },
+      "DashboardCampaignDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439013"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nuoc Sach Cho Dong Bao Vung Cao"
+          },
+          "description": {
+            "type": "string",
+            "example": "Cung cap nuoc sach cho 5.000 ho gia dinh tai cac ban lang vung sau vung xa."
+          },
+          "goalAmount": {
+            "type": "number",
+            "example": 1250000000
+          },
+          "currentAmount": {
+            "type": "number",
+            "example": 812500000
+          },
+          "currency": {
+            "type": "string",
+            "example": "VND"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "UNVERIFIED",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "example": "VERIFIED"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "progressPercent": {
+            "type": "number",
+            "example": 65
+          },
+          "donationCount": {
+            "type": "number",
+            "example": 12
+          },
+          "receivedAmount": {
+            "type": "number",
+            "example": 812500000
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-12T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "goalAmount",
+          "currentAmount",
+          "currency",
+          "verificationStatus",
+          "isActive",
+          "progressPercent",
+          "donationCount",
+          "receivedAmount",
+          "createdAt"
+        ]
+      },
+      "DashboardDonationCampaignDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439013"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nuoc Sach Cho Dong Bao Vung Cao"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "DashboardRecentDonationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439014"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-12T10:00:00.000Z"
+          },
+          "transferCode": {
+            "type": "string",
+            "example": "DON5QWMS96"
+          },
+          "blockchainTxId": {
+            "type": "string",
+            "example": "0xabc123"
+          },
+          "amount": {
+            "type": "number",
+            "example": 5000
+          },
+          "currency": {
+            "type": "string",
+            "example": "VND"
+          },
+          "campaign": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardDonationCampaignDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "transferCode",
+          "blockchainTxId",
+          "amount",
+          "currency",
+          "campaign"
+        ]
+      },
+      "DashboardResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/DashboardUserDto"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/DashboardSummaryDto"
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardOrganizationDto"
+            }
+          },
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardCampaignDto"
+            }
+          },
+          "recentDonations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardRecentDonationDto"
+            }
+          }
+        },
+        "required": [
+          "user",
+          "summary",
+          "organizations",
+          "campaigns",
+          "recentDonations"
+        ]
+      },
+      "DashboardBlockchainActivityDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "donation",
+            "enum": [
+              "organization",
+              "campaign",
+              "donation"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "example": "RECORD_DONATION",
+            "enum": [
+              "CREATE_ORGANIZATION",
+              "CREATE_CAMPAIGN",
+              "RECORD_DONATION"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "example": "665f1f77bcf86cd799439014"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nuoc Sach Cho Dong Bao Vung Cao"
+          },
+          "blockchainTxId": {
+            "type": "string",
+            "example": "0xabc123"
+          },
+          "blockchainId": {
+            "type": "string",
+            "example": "8a9227e7-4de3-4f2a-9f0d-8d1ff73fb69d"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-12T10:00:00.000Z"
+          },
+          "amount": {
+            "type": "number",
+            "example": 5000
+          },
+          "currency": {
+            "type": "string",
+            "example": "VND"
+          },
+          "campaign": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardDonationCampaignDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "action",
+          "entityId",
+          "title",
+          "timestamp"
+        ]
+      },
+      "DashboardBlockchainActivityMetaDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "DashboardBlockchainActivityResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardBlockchainActivityDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/DashboardBlockchainActivityMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
       }
     }
   }

@@ -1,28 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class RequestUserVerificationDto {
   @ApiProperty({
-    description: 'Identity document URL (CCCD/Passport image)',
-    example: 'https://storage.example.com/docs/cccd.jpg',
+    description: 'Verification document file keys/URLs',
+    example: [
+      'verification/user-id/cccd-front.jpg',
+      'verification/user-id/cccd-back.jpg',
+      'verification/user-id/selfie.jpg',
+    ],
     required: true,
+    type: [String],
   })
-  @IsString()
-  @IsNotEmpty({ message: 'Giấy tờ tùy thân (CCCD/Passport) là bắt buộc' })
-  identityDocument: string;
-
-  @ApiProperty({
-    description: 'Selfie photo URL holding the identity document',
-    example: 'https://storage.example.com/docs/selfie-with-cccd.jpg',
-    required: true,
-  })
-  @IsString()
-  @IsNotEmpty({ message: 'Ảnh selfie cầm giấy tờ tùy thân là bắt buộc' })
-  selfieWithDocument: string;
+  @IsArray()
+  @ArrayNotEmpty({ message: 'Verification documents are required' })
+  @IsString({ each: true })
+  documents: string[];
 
   @ApiProperty({
     description: 'Additional note for verification (optional)',
-    example: 'Thông tin bổ sung nếu cần',
+    example: 'Additional verification information if needed',
     required: false,
   })
   @IsString()

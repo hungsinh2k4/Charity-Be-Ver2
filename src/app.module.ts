@@ -13,6 +13,8 @@ import { VerificationModule } from './modules/verification/verification.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { BlogsModule } from './modules/blogs/blogs.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { BlogsModule } from './modules/blogs/blogs.module';
     VerificationModule,
     AdminModule,
     BlogsModule,
+    UploadsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
