@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build output
 dist/
@@ -10,6 +9,10 @@ build/
 .env
 .env.local
 .env.*.local
+env.yaml
+deploy-prod.ps1
+gcp-service-account.json
+*-service-account.json
 
 # IDE
 .idea/
@@ -39,10 +42,13 @@ coverage/
 
 # Hyperledger Fabric
 wallet/
+fabric/wallet-deploy/
+wallet-gcp.tar.gz
 connection.json
 *.pem
 *.crt
 *.key
+*_sk
 
 # Temporary files
 tmp/

@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { VerificationStatus } from '../../../common/enums';
 import { ApiProperty } from '@nestjs/swagger';
+import { BankInfo, BankInfoSchema } from '../../organizations/schemas/organization.schema';
 
 export type CampaignDocument = Campaign & Document;
 
@@ -87,6 +88,26 @@ export class Campaign {
   @ApiProperty({ description: 'Campaign tags', type: [String] })
   @Prop({ type: [String], default: [] })
   tags: string[];
+
+  @ApiProperty({
+    description:
+      'Tài khoản ngân hàng riêng của campaign (VietQR). ' +
+      'Nếu để trống, hệ thống sẽ fallback về TK của Tổ chức hoặc User tạo.',
+    required: false,
+    type: () => BankInfo,
+  })
+  @Prop({ type: BankInfoSchema, required: false })
+  bankInfo?: BankInfo;
+
+  @ApiProperty({
+    description:
+      'SePay API Key của campaign (lấy từ https://sepay.vn → Dashboard → API Key). ' +
+      'Bắt buộc — dùng để poll giao dịch Sepay cho campaign này.',
+    required: true,
+    example: 'DBVPAXKV3EUXCLQMBEWYJVAKSPUOCODSTC097AJYRC6VRE4N0Q1',
+  })
+  @Prop({ required: true, select: false })
+  sepayApiKey: string;
 
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;

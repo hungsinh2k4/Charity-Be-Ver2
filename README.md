@@ -1,397 +1,357 @@
 # Transparent Donation System Backend
 
-Hệ thống quyên góp minh bạch kết hợp **NestJS**, **MongoDB** và **Hyperledger Fabric** — đảm bảo mọi giao dịch tài chính được ghi lên blockchain bất biến, có thể kiểm toán bất kỳ lúc nào.
+Backend cho hệ thống quyên góp minh bạch, xây bằng **NestJS**, **MongoDB** và **Hyperledger Fabric**. Donation chỉ được ghi nhận sau khi hệ thống xác nhận giao dịch chuyển khoản, sau đó lưu MongoDB và ghi audit lên blockchain.
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| API Framework | NestJS + TypeScript |
-| Database | MongoDB (Mongoose) |
-| Blockchain | Hyperledger Fabric v2.5 |
-| Authentication | JWT + bcrypt |
+| --- | --- |
+| API | NestJS + TypeScript |
+| Database | MongoDB + Mongoose |
+| Blockchain | Hyperledger Fabric |
+| Auth | JWT + bcrypt |
+| Payment QR | VietQR / EMV QR |
 | API Docs | Swagger / OpenAPI |
-| Runtime | Node.js 18+ |
 
-## Tính năng
+## Tính Năng Chính
 
-- 🔐 **Xác thực người dùng** — JWT, phân quyền theo role (USER / AUDITOR / ADMIN)
-- 🏢 **Quản lý Tổ chức** — CRUD với xác minh đa cấp, ghi nhận on-chain
-- 📢 **Chiến dịch Gây quỹ** — Tạo bởi user đã verified, theo dõi tiến độ
-- 💰 **Quyên góp** — Không cần đăng nhập, tùy chọn ẩn danh, ghi blockchain
-- ✅ **Hệ thống Xác minh** — Auditor duyệt tổ chức/chiến dịch, lưu on-chain
-- 📊 **Audit Trail** — Lịch sử bất biến từ Hyperledger Fabric với txId thật
-- 👮 **Admin Dashboard** — Thống kê tổng quan, quản lý user
+- Xác thực JWT, phân quyền theo `USER`, `MODERATOR`, `AUDITOR`, `ADMIN`.
+- Guest có thể xem dữ liệu public và khởi tạo donation nếu hệ thống cho phép.
+- User đã verified có thể tạo organization/campaign.
+- Moderator duyệt user, organization và campaign.
+- Auditor xem audit trail, verification history và dữ liệu truy vết.
+- Admin quản trị hệ thống, user role, dashboard và xử lý ngoại lệ.
+- Donation theo luồng pending -> QR -> webhook/polling -> confirmed.
+- Upload giấy tờ xác minh lên Google Cloud Storage private bucket và cấp signed URL tạm thời cho file riêng tư.
+- Dashboard người dùng tổng hợp organization, campaign, donation gần đây và activity đã ghi blockchain.
+- Swagger JSON có thể cập nhật thủ công bằng script riêng.
 
----
+## Role Và Phân Quyền
 
-## Kiến trúc Blockchain
+| Role | Mục đích | Quyền chính |
+| --- | --- | --- |
+| Guest | Chưa đăng nhập | Xem campaign/organization/blog public, tạo donation public |
+| USER | Tài khoản thường | Cập nhật profile, request verification, xem donation cá nhân, tạo org/campaign khi đã verified |
+| MODERATOR | Kiểm duyệt | Xem pending verification, approve/reject user/org/campaign |
+| AUDITOR | Kiểm toán | Xem verification request, audit trail, blockchain summary, không duyệt |
+| ADMIN | Quản trị hệ thống | Dashboard, quản lý user role, xác nhận donation thủ công, audit overview |
 
+### Lưu ý cho FE
+
+- Không hiện nút approve/reject cho `AUDITOR`.
+- Nút approve/reject chỉ dành cho `MODERATOR`.
+- `ADMIN` không phải role duyệt nội dung chính, chỉ quản trị và xử lý ngoại lệ.
+- Khi tạo organization/campaign cần check `verificationStatus === 'VERIFIED'`.
+
+## Luồng Xác Minh
+
+```text
+User đăng ký
+  -> upload giấy tờ xác minh qua /uploads/verification
+  -> gửi yêu cầu xác minh danh tính với mảng documents
+  -> MODERATOR duyệt USER
+  -> user VERIFIED có thể tạo organization/campaign
+
+Organization tạo bởi user verified
+  -> upload legal documents
+  -> gửi request verification
+  -> MODERATOR duyệt ORGANIZATION
+  -> nếu VERIFIED thì ghi trạng thái lên blockchain
+
+Campaign tạo bởi user/org hợp lệ
+  -> gửi request verification
+  -> MODERATOR duyệt CAMPAIGN
+  -> nếu VERIFIED thì ghi trạng thái lên blockchain
 ```
-Client Request
-      │
-      ▼
-NestJS Backend ──── MongoDB (off-chain state)
-      │
-      ▼
-BlockchainService
-      │
-      ├─── MOCK mode    → In-memory (dev nhanh)
-      └─── PRODUCTION   → Hyperledger Fabric
-                              │
-                        ┌─────┴─────┐
-                    peer0.org1   peer0.org2
-                        └─────┬─────┘
-                          orderer
-                              │
-                         Ledger (immutable)
+
+## Luồng Donation + QR
+
+```text
+Guest/User
+  -> POST /donations
+  -> Backend tạo PendingDonation + transferCode
+  -> FE lấy QR qua /donations/:pendingId/payment-qr
+  -> Donor chuyển khoản với nội dung transferCode
+  -> Webhook Sepay/Casso hoặc polling xác nhận giao dịch
+  -> Backend tạo Donation thật
+  -> Cộng tiền vào campaign.currentAmount
+  -> Ghi blockchain
 ```
 
-**Dữ liệu ghi on-chain:**
-- `createOrganization` → khi tổ chức được tạo
-- `verifyOrganization` → khi auditor duyệt
-- `createCampaign` → khi chiến dịch được tạo (kể cả không có org)
-- `verifyCampaign` → khi auditor duyệt
-- `recordDonation` → mỗi khoản quyên góp
+Fallback thủ công:
 
----
+```text
+ADMIN -> POST /donations/confirm/:transferCode
+```
 
-## Cài đặt Nhanh (Mock Mode)
+## Cài Đặt Local
 
 ```bash
-# 1. Clone & install
-git clone <repository-url>
-cd Charity-Be-ver2
 npm install
-
-# 2. Cấu hình môi trường
 cp .env.example .env
-# Sửa .env: BLOCKCHAIN_MODE=mock
-
-# 3. Seed dữ liệu mẫu
 npm run seed:db
-
-# 4. Chạy server
 npm run start:dev
-# → http://localhost:8080/api
 ```
 
----
+Swagger UI:
 
-## Cài đặt Production (Hyperledger Fabric)
-
-### Yêu cầu
-- WSL2 (Ubuntu) với Docker Desktop
-- Node.js 18+ trong WSL2
-- [fabric-samples](https://github.com/hyperledger/fabric-samples) đã clone tại `~/fabric-samples`
-- Fabric binaries đã cài (xem [hướng dẫn](https://hyperledger-fabric.readthedocs.io/en/latest/install.html))
-
-### Bước 1 — Khởi động Fabric Test Network
-
-```bash
-# Trong WSL2
-cd ~/fabric-samples/test-network
-./network.sh up createChannel -c mychannel -ca
+```text
+http://localhost:8080/api
 ```
 
-### Bước 2 — Deploy Chaincode
+Health check:
 
-```bash
-cd ~/Charity-Be-ver2   # hoặc /mnt/d/22021184/Charity-Be-ver2
-
-export FABRIC_SAMPLES_PATH=$HOME/fabric-samples
-./scripts/deploy-chaincode.sh
+```text
+http://localhost:8080/health
 ```
 
-### Bước 3 — Enroll Users vào Wallet
+### Google Cloud Storage
 
-```bash
-node src/modules/blockchain/fabric/wallet-setup.js
+Upload giấy tờ xác minh dùng private Google Cloud Storage bucket. `.env` cần có:
+
+```env
+GCS_PROJECT_ID=your-google-cloud-project-id
+GCS_BUCKET_NAME=your-verification-docs-bucket
 ```
 
-Output thành công:
-```
-✅ Wallet setup hoàn tất!
-   ✓ admin
-   ✓ appUser
+Service account nên cấu hình qua biến môi trường chuẩn của Google SDK, ví dụ `GOOGLE_APPLICATION_CREDENTIALS`, và file key như `gcp-service-account.json` không được commit.
+
+Luồng FE cho user verification:
+
+```text
+POST /uploads/verification multipart/form-data file=<image/pdf>
+  -> nhận fileKey
+POST /users/request-verification { "documents": ["verification/..."], "verificationNote": "..." }
 ```
 
-### Bước 4 — Cấu hình .env
+File upload hỗ trợ JPG, PNG, WebP, PDF và giới hạn 10MB/file. File private có thể lấy signed URL tạm thời qua `GET /uploads/signed-url?fileKey=...`.
+
+## Local Fabric
+
+File local connection profile:
+
+```text
+fabric/connection-profile-local.json
+```
+
+`.env` local nên dùng:
 
 ```env
 BLOCKCHAIN_MODE=production
 FABRIC_CHANNEL_NAME=mychannel
 FABRIC_CHAINCODE_NAME=charity-chaincode
-
-# Trỏ thẳng vào WSL test-network (luôn dùng cert mới nhất)
 FABRIC_WALLET_PATH=./wallet
-FABRIC_CONNECTION_PROFILE=\\wsl.localhost\Ubuntu\home\<username>\fabric-samples\test-network\organizations\peerOrganizations\org1.example.com\connection-org1.json
-
+FABRIC_CONNECTION_PROFILE=./fabric/connection-profile-local.json
 FABRIC_USER_ID=appUser
 FABRIC_MSP_ID=Org1MSP
 FABRIC_CA_NAME=ca.org1.example.com
 FABRIC_ADMIN_USER=admin
 FABRIC_ADMIN_PASS=adminpw
+FABRIC_AS_LOCALHOST=true
 ```
 
-### Bước 5 — Chạy Backend (Windows)
+`connection-profile-local.json` đang trỏ:
 
-```bash
-npm run start:dev
+```text
+peer0.org1.example.com -> grpcs://localhost:7051
+orderer.example.com   -> grpcs://localhost:7050
+ca.org1.example.com   -> https://localhost:7054
 ```
 
-Log thành công:
-```
-✅ Hyperledger Fabric gateway initialized | channel: mychannel | chaincode: charity-chaincode
-```
+Nếu restart/recreate Fabric network, TLS cert có thể đổi. Khi gặp lỗi `DiscoveryService has failed to return results`, cần sync lại TLS cert trong `fabric/connection-profile-local.json` từ container Fabric hiện tại.
 
----
+## Deploy / Docker
 
-## 🐳 Chạy bằng Docker (với Hyperledger Fabric)
+Các môi trường dùng profile riêng:
 
-Docker container kết nối tới Fabric network chạy trong WSL2 thông qua `host.docker.internal`.
+| Môi trường | Connection profile |
+| --- | --- |
+| Local Windows/Nest | `./fabric/connection-profile-local.json` |
+| Docker Compose | `/app/fabric/connection-docker.json` |
+| Cloud Run/GCP | `/app/fabric/connection-gcp.json` |
 
-### Bước 1 — Chuẩn bị (WSL2)
-
-```bash
-cd ~/Charity-Be-ver2
-
-# Đảm bảo Fabric đang chạy và chaincode đã deploy
-# Sau đó chạy script chuẩn bị:
-./scripts/prepare-docker-fabric.sh
-```
-
-Script sẽ tự động:
-- Tạo `fabric/connection-docker.json` (`localhost` → `host.docker.internal`)
-- Kiểm tra wallet đã có `admin.id` và `appUser.id`
-
-> Nếu wallet chưa có: `rm -rf wallet/ && node src/modules/blockchain/fabric/wallet-setup.js`
-
-### Bước 2 — Build và chạy Docker (Windows)
+Docker Compose:
 
 ```bash
 docker compose down
 docker compose build
 docker compose up -d
-
-# Xem logs
 docker compose logs backend -f
 ```
 
-Log thành công:
-```
-✅ Hyperledger Fabric gateway initialized | channel: mychannel | chaincode: charity-chaincode
-Blockchain mode:   production
-```
+Production deploy hiện dùng `deploy-prod.ps1` và `env.yaml`, không dùng `.env` local.
 
-### Cách hoạt động
+## Swagger
 
-```
-Docker container
-    → peer0.org1.example.com:7051   (extra_hosts → host-gateway)
-    → peer0.org2.example.com:9051   (extra_hosts → host-gateway)
-    → orderer.example.com:7050      (extra_hosts → host-gateway)
-         ↓ (Windows host)
-    → WSL2 port forwarding
-    → Fabric network containers
-```
-
-Docker `extra_hosts` map tất cả Fabric hostnames về Windows host (→ WSL2), không cần thay đổi TLS certificates.
-
-### Các lệnh Docker thường dùng
+`swagger.json` được generate từ decorators hiện tại. Chạy thủ công khi API thay đổi:
 
 ```bash
-docker compose up -d              # Chạy ngầm
-docker compose down               # Dừng
-docker compose down -v            # Dừng + xóa MongoDB data
-docker compose logs backend -f    # Xem backend logs
-docker compose logs mongodb -f    # Xem MongoDB logs
-docker compose exec backend sh    # Vào shell container
-docker compose exec mongodb mongosh charity  # Vào MongoDB shell
-docker compose build --no-cache   # Rebuild image (sau khi sửa code)
+npm run swagger:generate
 ```
 
-> **Port conflict:** Không chạy đồng thời `npm run start:dev` và `docker compose up` — cả hai dùng port 8080.
+## API Chính
 
----
+### Auth
 
-## Quy trình Restart Fabric Network
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| POST | `/auth/register` | Public |
+| POST | `/auth/login` | Public |
 
-Mỗi lần cần reset hoàn toàn:
+### Users
 
-```bash
-# WSL2
-cd ~/fabric-samples/test-network
-./network.sh down && docker volume prune -f
-./network.sh up createChannel -c mychannel -ca
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/users/me` | JWT |
+| PATCH | `/users/me` | JWT |
+| POST | `/users/request-verification` | JWT, body `documents: string[]` |
 
-cd ~/Charity-Be-ver2
-./scripts/deploy-chaincode.sh
-rm -rf wallet/ && node src/modules/blockchain/fabric/wallet-setup.js
+### Uploads
 
-# Windows
-npm run start:dev
-```
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| POST | `/uploads/verification` | JWT, multipart `file` |
+| GET | `/uploads/signed-url?fileKey=...` | JWT |
 
-> **Tip:** Tạo symlink để không cần copy wallet:
-> ```bash
-> ln -s /mnt/d/22021184/Charity-Be-ver2 ~/Charity-Be-ver2
-> ```
+### Dashboard
 
----
-
-## API Endpoints
-
-Swagger UI: **http://localhost:8080/api**
-
-### Authentication
-| Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| POST | `/auth/register` | Đăng ký tài khoản | Public |
-| POST | `/auth/login` | Đăng nhập, nhận JWT | Public |
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/dashboard/me?recentLimit=3` | JWT |
+| GET | `/dashboard/blockchain-activity?page=1&limit=10` | Public |
 
 ### Organizations
-| Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| GET | `/organizations` | Danh sách tổ chức | Public |
-| POST | `/organizations` | Tạo tổ chức mới | JWT (verified) |
-| GET | `/organizations/:id` | Chi tiết tổ chức | Public |
-| POST | `/organizations/:id/request-verification` | Gửi yêu cầu xác minh | JWT |
-| PATCH | `/organizations/:id/verification-status` | Duyệt/từ chối | Auditor |
-| GET | `/organizations/:id/audit` | **Audit trail blockchain** | Public |
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/organizations` | Public |
+| POST | `/organizations` | JWT + verified user |
+| GET | `/organizations/my` | JWT |
+| GET | `/organizations/:id` | Public |
+| PATCH | `/organizations/:id` | Owner |
+| DELETE | `/organizations/:id` | Owner |
+| POST | `/organizations/:id/request-verification` | Owner |
 
 ### Campaigns
-| Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| GET | `/campaigns` | Danh sách chiến dịch | Public |
-| POST | `/campaigns` | Tạo chiến dịch | JWT (verified) |
-| PATCH | `/campaigns/:id/verification-status` | Duyệt chiến dịch | Auditor |
-| GET | `/campaigns/:id/audit` | **Audit trail blockchain** | Public |
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/campaigns` | Public |
+| POST | `/campaigns` | JWT + verified user |
+| GET | `/campaigns/my` | JWT |
+| GET | `/campaigns/:id` | Public |
+| PATCH | `/campaigns/:id` | Creator |
+| DELETE | `/campaigns/:id` | Creator |
 
 ### Donations
-| Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| POST | `/donations` | Quyên góp (optional login) | Optional JWT |
-| GET | `/donations/my` | Danh sách donation của tôi | JWT |
-| GET | `/donations/campaign/:id` | Donations theo campaign | Public |
-| GET | `/donations/:id/verify` | **Xác minh trên blockchain** | Public |
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| POST | `/donations` | Optional JWT |
+| GET | `/donations/:pendingId/payment-qr` | Public |
+| GET | `/donations/:pendingId/payment-qr/image` | Public |
+| GET | `/donations/:pendingId/status` | Public |
+| POST | `/donations/webhook/sepay` | Internal |
+| POST | `/donations/webhook/casso` | Internal |
+| POST | `/donations/confirm/:transferCode` | ADMIN |
+| GET | `/donations/lookup/:transferCode` | Public |
+| GET | `/donations/my` | JWT |
+| GET | `/donations/campaign/:campaignId` | Public |
+| GET | `/donations/:id/verify` | Public |
+
+### Verification
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| POST | `/verification/request` | JWT |
+
+### Moderator
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/moderator/verification/requests` | MODERATOR |
+| GET | `/moderator/verification/requests/:id` | MODERATOR |
+| POST | `/moderator/verification/requests/:id/process` | MODERATOR |
+| GET | `/moderator/verification/stats` | MODERATOR |
+| GET | `/moderator/users/pending-verifications` | MODERATOR |
+| GET | `/moderator/users/:id/verification-details` | MODERATOR |
+| GET | `/moderator/organizations/pending-verifications` | MODERATOR |
+| GET | `/moderator/campaigns/pending-verifications` | MODERATOR |
+
+### Auditor
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/auditor/audit/campaigns/:id` | AUDITOR / ADMIN |
+| GET | `/auditor/audit/donations/:id` | AUDITOR / ADMIN |
+
+Auditor chỉ truy vết nghiệp vụ tiền: campaign gây quỹ và donation đã thanh toán. Audit endpoints return a combined trace response: the MongoDB record, the stored blockchain identifier, blockchain connection status, and the history read back through `BlockchainService`.
 
 ### Admin
-| Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| GET | `/admin/dashboard` | Thống kê tổng quan | Admin |
-| GET | `/admin/users` | Quản lý users | Admin |
-| GET | `/admin/audit/organizations/:id` | Audit org | Admin |
-| GET | `/admin/audit/campaigns/:id` | Audit campaign | Admin |
 
----
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/admin/dashboard` | ADMIN |
+| GET | `/admin/users` | ADMIN |
+| PATCH | `/admin/users/:id/role` | ADMIN |
 
-## Phân quyền
+## Seed Data
 
-| Role | Quyền hạn |
-|------|-----------|
-| **USER** | Đăng ký, xem dữ liệu, quyên góp, tạo tổ chức/campaign (sau khi verified) |
-| **AUDITOR** | Tất cả quyền USER + duyệt/từ chối tổ chức, chiến dịch |
-| **ADMIN** | Tất cả quyền + quản lý users, xem dashboard |
-
-### Luồng xác minh
-
-```
-User đăng ký
-    → Admin nâng role → VERIFIED
-    → User tạo Organization
-    → Upload legal documents
-    → Gửi request verification
-    → Auditor duyệt → VERIFIED (ghi on-chain)
-    → Tạo Campaign → PENDING (ghi on-chain)
-    → Auditor duyệt Campaign → VERIFIED (ghi on-chain)
-    → Donors quyên góp (ghi on-chain)
+```bash
+npm run seed:db
 ```
 
----
+Lệnh này xóa dữ liệu cũ và tạo mock data mới.
 
-## Cấu trúc Project
+### Tài Khoản Test
 
-```
-.
-├── chaincode/charity/          # Hyperledger Fabric smart contract
-│   ├── index.js                # CharityContract (JS, deterministic)
-│   └── package.json
-├── fabric/
-│   └── connection-profile.json # Template (dùng connection-org1.json từ test-network)
-├── scripts/
-│   ├── deploy-chaincode.sh     # Deploy/upgrade chaincode lên Fabric
-│   ├── refresh-fabric.sh       # Re-enroll wallet sau khi restart network
-│   └── seed.ts                 # Seed dữ liệu mẫu MongoDB
-├── src/
-│   ├── common/enums/           # Shared enums (Role, VerificationStatus)
-│   └── modules/
-│       ├── auth/               # JWT authentication & guards
-│       ├── users/              # User profile management
-│       ├── organizations/      # Organization CRUD & verification
-│       ├── campaigns/          # Campaign CRUD & verification
-│       ├── donations/          # Donation handling
-│       ├── verification/       # Verification request workflow
-│       ├── admin/              # Admin dashboard
-│       └── blockchain/         # Hyperledger Fabric integration
-│           ├── blockchain.service.ts  # Gateway, transactions
-│           └── fabric/
-│               └── wallet-setup.js   # Enroll admin + appUser
-├── .env.example
-└── README.md
-```
-
----
-
-## Chaincode
-
-Smart contract viết bằng JavaScript (Node.js), tuân thủ các quy tắc Fabric:
-
-- ✅ **Deterministic** — Dùng `ctx.stub.getTxTimestamp()` thay vì `new Date()`
-- ✅ **Idempotent** — Kiểm tra tồn tại trước khi ghi
-- ✅ **Immutable records** — Donation không thể bị overwrite
-- ✅ **Event emission** — Emit event cho mỗi operation
-
-```
-chaincode/charity/index.js
-├── createOrganization(ctx, assetJSON)
-├── verifyOrganization(ctx, orgId, adminId)
-├── getOrganizationHistory(ctx, orgId)
-├── createCampaign(ctx, assetJSON)
-├── verifyCampaign(ctx, campaignId, adminId)
-├── getCampaignHistory(ctx, campaignId)
-├── recordDonation(ctx, assetJSON)
-├── getDonationHistory(ctx, donationId)
-└── getCampaignDonations(ctx, campaignId)
-```
-
----
+| Role / State | Email | Password |
+| --- | --- | --- |
+| ADMIN | `admin@charity.com` | `Admin123!` |
+| MODERATOR | `moderator@charity.com` | `Password123!` |
+| AUDITOR | `auditor@charity.com` | `Password123!` |
+| USER verified org owner | `org1@helpinghands.org` | `Password123!` |
+| USER verified donor | `donor1@gmail.com` | `Password123!` |
+| USER pending | `pending@example.com` | `Password123!` |
+| USER unverified | `user.unverified@charity.com` | `Password123!` |
+| USER rejected | `user.rejected@charity.com` | `Password123!` |
 
 ## Scripts
 
-```bash
-npm run start:dev       # Dev với hot reload
-npm run build           # Build production
-npm run start:prod      # Chạy production build
-npm run test            # Unit tests
-npm run lint            # ESLint
-npm run seed:db         # Seed dữ liệu mẫu
-npm run blockchain:setup  # Enroll wallet (= node wallet-setup.js)
+| Script | Mục đích |
+| --- | --- |
+| `npm run start:dev` | Chạy dev server |
+| `npm run build` | Build app |
+| `npm run swagger:generate` | Cập nhật `swagger.json` |
+| `npm run start:prod` | Chạy production build |
+| `npm run seed:db` | Seed mock data |
+| `npm run blockchain:setup` | Enroll wallet Fabric |
+| `npm run test` | Chạy test |
+| `npm run lint` | ESLint |
+
+## Project Structure
+
+```text
+chaincode/charity/              Fabric chaincode
+fabric/                         Fabric connection profiles
+scripts/                        Seed, deploy, Swagger generation
+src/common/enums/               Role, status, entity enums
+src/modules/auth/               JWT auth, guards, decorators
+src/modules/users/              User profile and verification
+src/modules/organizations/      Organization CRUD and verification
+src/modules/campaigns/          Campaign CRUD and verification
+src/modules/donations/          Donation, pending donation, QR, webhook
+src/modules/verification/       Generic verification request workflow
+src/modules/admin/              Admin and audit endpoints
+src/modules/dashboard/          User dashboard and blockchain activity feed
+src/modules/uploads/            Private verification uploads and signed URLs
+src/modules/blockchain/         Fabric gateway integration
 ```
 
----
+## Notes
 
-## Tài khoản mẫu (sau seed:db)
-
-| Email | Password | Role |
-|-------|----------|------|
-| admin@charity.com | Admin123! | ADMIN |
-| auditor@charity.com | Password123! | AUDITOR |
-| org1@helpinghands.org | Password123! | USER (verified) |
-| donor1@gmail.com | Password123! | USER (verified) |
-
----
-
-## License
-
-MIT
+- `.env` và `.env.local` không được commit.
+- Service account JSON không được commit; dùng `GOOGLE_APPLICATION_CREDENTIALS` hoặc secret của môi trường deploy.
+- `swagger.json` được commit để FE có thể dùng trực tiếp.
+- Admin dashboard có thể hiển thị verification stats như overview, nhưng thao tác duyệt thuộc về Moderator.
+- Auditor chỉ đọc/audit, không approve/reject.

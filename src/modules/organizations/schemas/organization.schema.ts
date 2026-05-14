@@ -89,10 +89,6 @@ export class Organization {
   @Prop({ default: false })
   isDeleted: boolean;
 
-  @ApiProperty({ description: 'Thông tin ngân hàng để nhận donate (VietQR)', required: false, type: () => BankInfo })
-  @Prop({ type: BankInfoSchema, required: false })
-  bankInfo?: BankInfo;
-
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt?: Date;
 

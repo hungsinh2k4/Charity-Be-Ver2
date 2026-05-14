@@ -130,10 +130,6 @@ Returns JWT token.
 *Requires Auth (Bearer Token) - Creator only*
 *Soft delete organization.*
 
-### Get Audit Trail
-`GET /organizations/:id/audit`
-*Get organization blockchain audit trail.*
-
 ---
 
 ## Campaigns
@@ -198,10 +194,6 @@ Returns JWT token.
 `DELETE /campaigns/:id`
 *Requires Auth (Bearer Token) - Creator only*
 *Soft delete campaign.*
-
-### Get Audit Trail
-`GET /campaigns/:id/audit`
-*Get campaign blockchain audit trail.*
 
 ---
 
@@ -276,43 +268,73 @@ Returns JWT token.
 }
 ```
 
-### List Requests
-`GET /verification/requests`
-*Requires Auth (Admin/Auditor only)*
+---
+
+## Moderator
+
+**Endpoint**: `/moderator`
+*All endpoints require JWT auth and `MODERATOR` role.*
+
+### List Verification Requests
+`GET /moderator/verification/requests`
 
 **Query Parameters**:
 - `status`: enum (`PENDING`, `APPROVED`, `REJECTED`)
 
-### Get Request by ID
-`GET /verification/requests/:id`
-*Requires Auth (Admin/Auditor only)*
+### Get Verification Request by ID
+`GET /moderator/verification/requests/:id`
 
-### Process Request
-`POST /verification/requests/:id/process`
-*Requires Auth (Admin only)*
+### Process Verification Request
+`POST /moderator/verification/requests/:id/process`
 
 **Body**:
 ```json
 {
-  "approved": true,                  // required
-  "reviewNotes": "Looks good"        // optional
+  "approved": true,
+  "reviewNotes": "Looks good"
 }
 ```
 
-### Get Stats
-`GET /verification/stats`
-*Requires Auth (Admin/Auditor only)*
+### Get Verification Stats
+`GET /moderator/verification/stats`
+
+### Pending User Verifications
+`GET /moderator/users/pending-verifications`
+
+### User Verification Details
+`GET /moderator/users/:id/verification-details`
+
+### Pending Organization Verifications
+`GET /moderator/organizations/pending-verifications`
+
+### Pending Campaign Verifications
+`GET /moderator/campaigns/pending-verifications`
+
+---
+
+## Auditor
+
+**Endpoint**: `/auditor`
+*All endpoints require JWT auth and `AUDITOR` or `ADMIN` role.*
+
+### Get Campaign Audit
+`GET /auditor/audit/campaigns/:id`
+
+### Get Donation Audit
+`GET /auditor/audit/donations/:id`
+
+Auditor only traces money-related records: fundraising campaigns and confirmed donations. Audit endpoints return the MongoDB record, stored blockchain ID, blockchain connection status, and audit history queried through the Blockchain Module.
 
 ---
 
 ## Admin
 
 **Endpoint**: `/admin`
-*All endpoints require Auth (Admin or Auditor role)*
+*All endpoints require JWT auth. Individual role requirements are listed below.*
 
 ### Get Dashboard Stats
 `GET /admin/dashboard`
-*(Admin/Auditor)*
+*(Admin only)*
 
 ### Get All Users
 `GET /admin/users`
@@ -328,18 +350,6 @@ Returns JWT token.
   "role": "ADMIN" // "USER", "ADMIN", "AUDITOR"
 }
 ```
-
-### Get Organization Audit
-`GET /admin/audit/organizations/:id`
-*(Admin/Auditor)*
-
-### Get Campaign Audit
-`GET /admin/audit/campaigns/:id`
-*(Admin/Auditor)*
-
-### Get Blockchain Summary
-`GET /admin/blockchain/summary`
-*(Admin/Auditor)*
 
 ---
 

@@ -22,6 +22,23 @@ export class OrganizationsService {
     private blockchainService: BlockchainService,
   ) {}
 
+  private getOrganizationOwnerId(organization: OrganizationDocument): string {
+    const userId = organization.userId as unknown;
+
+    if (userId instanceof Types.ObjectId) {
+      return userId.toString();
+    }
+
+    if (userId && typeof userId === 'object') {
+      const populatedUser = userId as { _id?: Types.ObjectId | string };
+      if (populatedUser._id) {
+        return populatedUser._id.toString();
+      }
+    }
+
+    return String(userId);
+  }
+
   async create(
     createDto: CreateOrganizationDto,
     userId: string,
@@ -80,7 +97,7 @@ export class OrganizationsService {
     userId: string,
   ): Promise<OrganizationDocument> {
     const organization = await this.findById(id);
-    if (organization.userId.toString() !== userId) {
+    if (this.getOrganizationOwnerId(organization) !== userId) {
       throw new ForbiddenException(
         'Only the creator can update this organization',
       );
@@ -91,7 +108,7 @@ export class OrganizationsService {
 
   async softDelete(id: string, userId: string): Promise<OrganizationDocument> {
     const organization = await this.findById(id);
-    if (organization.userId.toString() !== userId) {
+    if (this.getOrganizationOwnerId(organization) !== userId) {
       throw new ForbiddenException(
         'Only the creator can delete this organization',
       );
@@ -111,7 +128,7 @@ export class OrganizationsService {
     const organization = await this.findById(id);
 
     // Check ownership
-    if (organization.userId.toString() !== userId) {
+    if (this.getOrganizationOwnerId(organization) !== userId) {
       throw new ForbiddenException(
         'Only the organization owner can request verification',
       );
@@ -140,7 +157,7 @@ export class OrganizationsService {
   }
 
   /**
-   * Update verification status (for admin)
+   * Update verification status (for moderator)
    */
   async updateVerificationStatus(
     id: string,
@@ -167,16 +184,40 @@ export class OrganizationsService {
 
   async getAuditTrail(id: string) {
     const organization = await this.findById(id);
+    const blockchainStatus = this.blockchainService.getStatus();
+
     if (!organization.blockchainId) {
-      return { message: 'No blockchain record available' };
+      return {
+        entityType: 'organization',
+        mongoRecord: organization,
+        blockchain: {
+          status: blockchainStatus,
+          id: null,
+          hasRecord: false,
+        },
+        auditTrail: [],
+        message: 'No blockchain record available',
+      };
     }
-    return this.blockchainService.getOrganizationHistory(
+
+    const auditTrail = await this.blockchainService.getOrganizationHistory(
       organization.blockchainId,
     );
+
+    return {
+      entityType: 'organization',
+      mongoRecord: organization,
+      blockchain: {
+        status: blockchainStatus,
+        id: organization.blockchainId,
+        hasRecord: auditTrail.length > 0,
+      },
+      auditTrail,
+    };
   }
 
   /**
-   * Get all organizations with pending verification (for auditor)
+   * Get all organizations with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<OrganizationDocument[]> {
     return this.organizationModel

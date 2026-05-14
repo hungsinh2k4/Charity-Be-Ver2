@@ -16,9 +16,8 @@ import {
 } from '@nestjs/swagger';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
-import { JwtAuthGuard, VerifiedUserGuard, RolesGuard } from '../auth/guards';
-import { CurrentUser, Roles } from '../auth/decorators';
-import { Role, VerificationStatus } from '../../common/enums';
+import { JwtAuthGuard, VerifiedUserGuard } from '../auth/guards';
+import { CurrentUser } from '../auth/decorators';
 import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Organizations')
@@ -57,21 +56,6 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Get organizations created by current user' })
   async findMyOrganizations(@CurrentUser() user: AuthenticatedUser) {
     return this.organizationsService.findByUser(user.userId);
-  }
-
-  @Get('pending-verifications')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Auditor] Get all organizations with pending verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns list of organizations pending verification',
-  })
-  async getPendingVerifications() {
-    return this.organizationsService.findPendingVerifications();
   }
 
   @Get(':id')
@@ -149,30 +133,4 @@ export class OrganizationsController {
     return this.organizationsService.requestVerification(id, user.userId);
   }
 
-  @Patch(':id/verification-status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.AUDITOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Auditor] Approve or reject organization verification',
-  })
-  @ApiResponse({ status: 200, description: 'Verification status updated' })
-  async updateVerificationStatus(
-    @Param('id') id: string,
-    @Body('status') status: VerificationStatus,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    return this.organizationsService.updateVerificationStatus(
-      id,
-      status,
-      user.userId,
-    );
-  }
-
-  @Get(':id/audit')
-  @ApiOperation({ summary: 'Get organization blockchain audit trail' })
-  @ApiResponse({ status: 200, description: 'Returns blockchain audit history' })
-  async getAuditTrail(@Param('id') id: string) {
-    return this.organizationsService.getAuditTrail(id);
-  }
 }

@@ -3,10 +3,11 @@ import * as QRCode from 'qrcode';
 import type { BankInfo } from '../organizations/schemas/organization.schema';
 
 export interface VietQRPayload {
-    bankBin: string;       // Mã BIN ngân hàng (6 số, VD: 970422 = MB Bank)
-    accountNumber: string; // Số tài khoản
-    accountName: string;   // Tên chủ tài khoản
-    amount: number;        // Số tiền (VND)
+    bankBin: string;         // Mã BIN ngân hàng (6 số, VD: 970422 = MB Bank)
+    bankName?: string;       // Tên ngân hàng (VD: "MB Bank", "BIDV")
+    accountNumber: string;   // Số tài khoản
+    accountName: string;     // Tên chủ tài khoản
+    amount: number;          // Số tiền (VND)
     transferContent: string; // Nội dung chuyển khoản (mã đối soát)
     campaignTitle?: string;
 }
@@ -84,7 +85,7 @@ export class DonationsQrService {
             donationUrl,
             transferContent: payload.transferContent,
             bankInfo: {
-                bankName: payload.accountName,
+                bankName: payload.bankName ?? payload.accountName, // tên ngân hàng, fallback sang accountName
                 accountNumber: payload.accountNumber,
                 accountName: payload.accountName,
                 amount: payload.amount,
@@ -215,6 +216,7 @@ export class DonationsQrService {
 
     /**
      * Kiểm tra xem entity có đủ bank info để sinh QR không.
+     * Tự động resolve bankBin từ bankName nếu chưa có.
      */
     validateBankInfo(bankInfo: BankInfo | null | undefined, ownerType: string): void {
         if (!bankInfo) {
@@ -223,10 +225,68 @@ export class DonationsQrService {
                 `Vui lòng cập nhật thông tin ngân hàng trước.`,
             );
         }
-        if (!bankInfo.bankBin || !bankInfo.accountNumber || !bankInfo.accountName) {
+        if (!bankInfo.accountNumber || !bankInfo.accountName) {
             throw new BadRequestException(
-                `Thông tin ngân hàng của ${ownerType} không đầy đủ (cần bankBin, accountNumber, accountName).`,
+                `Thông tin ngân hàng của ${ownerType} không đầy đủ. Cần có: accountNumber, accountName.`,
             );
         }
+
+        // Auto-resolve bankBin từ bankName nếu chưa có
+        if (!bankInfo.bankBin && bankInfo.bankName) {
+            const resolved = this.resolveBankBin(bankInfo.bankName);
+            if (resolved) {
+                (bankInfo as any).bankBin = resolved;
+            }
+        }
+
+        if (!bankInfo.bankBin) {
+            throw new BadRequestException(
+                `Thiếu mã BIN ngân hàng (bankBin) cho ${ownerType}. ` +
+                `Ví dụ BIDV = 970418, MB Bank = 970422, Vietcombank = 970436. ` +
+                `Vui lòng cập nhật lại bankInfo với đủ các trường: bankBin, bankName, accountNumber, accountName.`,
+            );
+        }
+    }
+
+    /**
+     * Bảng tra cứu BIN ngân hàng phổ biến tại Việt Nam.
+     * Dùng khi user nhập bankName nhưng quên bankBin.
+     */
+    resolveBankBin(bankName: string): string | null {
+        const name = bankName.toUpperCase().trim();
+        const map: Record<string, string> = {
+            'BIDV': '970418',
+            'MB': '970422', 'MB BANK': '970422', 'MBBANK': '970422',
+            'VIETCOMBANK': '970436', 'VCB': '970436',
+            'TECHCOMBANK': '970407', 'TCB': '970407',
+            'VPBANK': '970432', 'VPB': '970432',
+            'VIETINBANK': '970415', 'CTG': '970415',
+            'AGRIBANK': '970405',
+            'ACB': '970416',
+            'TPBANK': '970423',
+            'SACOMBANK': '970403', 'STB': '970403',
+            'HDBANK': '970437',
+            'OCBBANK': '970448', 'OCB': '970448',
+            'MSBANK': '970426', 'MSB': '970426', 'MARITIME': '970426',
+            'SEABANK': '970440',
+            'VIETBANK': '970433',
+            'ABBANK': '970425',
+            'NCBBANK': '970419', 'NCB': '970419',
+            'PVCOMBANK': '970412',
+            'BACABANK': '970409',
+            'KIENLONGBANK': '970452',
+            'PGBANK': '970430',
+            'GPBANK': '970408',
+            'VIETABANK': '970427',
+            'NAMABANK': '970428',
+            'DONG A BANK': '970406',
+            'CBBANK': '970444',
+            'INDOCHINA': '970434', 'IVB': '970434',
+            'SHB': '970443', 'SHBVN': '970443',
+            'VIB': '970441',
+            'SAIGONBANK': '970400',
+            'BAOVIET BANK': '970438', 'BVBANK': '970438',
+        };
+        return map[name] ?? null;
     }
 }

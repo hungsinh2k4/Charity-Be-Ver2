@@ -7,7 +7,7 @@ import { RequestUserVerificationDto } from './dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(userData: {
     email: string;
@@ -64,8 +64,9 @@ export class UsersService {
   }
 
   /**
-   * Request verification for a user
-   * Requires identity document and selfie with document
+   * Request verification for a user.
+   * FE sends documents as an array. The current user schema still stores the
+   * first two document keys in identityDocument/selfieWithDocument.
    */
   async requestVerification(
     userId: string,
@@ -88,8 +89,8 @@ export class UsersService {
       .findByIdAndUpdate(
         userId,
         {
-          identityDocument: dto.identityDocument,
-          selfieWithDocument: dto.selfieWithDocument,
+          identityDocument: dto.documents[0],
+          selfieWithDocument: dto.documents[1] || dto.documents[0],
           verificationNote: dto.verificationNote,
           verificationStatus: VerificationStatus.PENDING,
         },
@@ -100,7 +101,7 @@ export class UsersService {
   }
 
   /**
-   * Get all users with pending verification (for auditor)
+   * Get all users with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<UserDocument[]> {
     return this.userModel
@@ -110,7 +111,7 @@ export class UsersService {
   }
 
   /**
-   * Get user verification details by ID (for auditor)
+   * Get user verification details by ID (for moderator)
    */
   async getVerificationDetails(userId: string): Promise<UserDocument | null> {
     return this.userModel

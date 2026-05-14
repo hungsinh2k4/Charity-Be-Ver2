@@ -19,6 +19,22 @@ export class CampaignsService {
     private blockchainService: BlockchainService,
   ) { }
 
+  private getOrganizationOwnerId(organization: {
+    userId: Types.ObjectId | { _id?: Types.ObjectId | string } | string;
+  }): string {
+    const { userId } = organization;
+
+    if (userId instanceof Types.ObjectId) {
+      return userId.toString();
+    }
+
+    if (userId && typeof userId === 'object' && userId._id) {
+      return userId._id.toString();
+    }
+
+    return String(userId);
+  }
+
   async create(
     createDto: CreateCampaignDto,
     creatorId: string,
@@ -30,7 +46,7 @@ export class CampaignsService {
       const organization = await this.organizationsService.findById(
         createDto.organizationId,
       );
-      if (organization.userId.toString() !== creatorId) {
+      if (this.getOrganizationOwnerId(organization) !== creatorId) {
         throw new ForbiddenException(
           'Only organization creator can create campaigns for this organization',
         );
@@ -75,7 +91,22 @@ export class CampaignsService {
     organizationId?: string;
     verificationStatus?: VerificationStatus;
     isActive?: boolean;
-  }): Promise<CampaignDocument[]> {
+  }, pagination?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: CampaignDocument[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+    const skip = (page - 1) * limit;
+
     const query: {
       isDeleted: boolean;
       organizationId?: Types.ObjectId;
@@ -91,11 +122,27 @@ export class CampaignsService {
     if (filters?.isActive !== undefined) {
       query.isActive = filters.isActive;
     }
-    return this.campaignModel
-      .find(query)
-      .populate('organizationId', 'name')
-      .populate('creatorId', 'name email')
-      .exec();
+
+    const [data, total] = await Promise.all([
+      this.campaignModel
+        .find(query)
+        .populate('organizationId', 'name')
+        .populate('creatorId', 'name email')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.campaignModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findByCreator(creatorId: string): Promise<CampaignDocument[]> {
@@ -115,6 +162,17 @@ export class CampaignsService {
       throw new NotFoundException('Campaign not found');
     }
     return campaign;
+  }
+
+  /**
+   * Tìm campaign kèm sepayApiKey (field có select:false).
+   * CHỈ dùng nội bộ (polling service) — không expose ra API response.
+   */
+  async findByIdWithApiKey(id: string): Promise<CampaignDocument | null> {
+    return this.campaignModel
+      .findById(id)
+      .select('+sepayApiKey')
+      .exec();
   }
 
   async update(
@@ -179,14 +237,40 @@ export class CampaignsService {
 
   async getAuditTrail(id: string) {
     const campaign = await this.findById(id);
+    const blockchainStatus = this.blockchainService.getStatus();
+
     if (!campaign.blockchainId) {
-      return { message: 'No blockchain record available' };
+      return {
+        entityType: 'campaign',
+        mongoRecord: campaign,
+        blockchain: {
+          status: blockchainStatus,
+          id: null,
+          hasRecord: false,
+        },
+        auditTrail: [],
+        message: 'No blockchain record available',
+      };
     }
-    return this.blockchainService.getCampaignHistory(campaign.blockchainId);
+
+    const auditTrail = await this.blockchainService.getCampaignHistory(
+      campaign.blockchainId,
+    );
+
+    return {
+      entityType: 'campaign',
+      mongoRecord: campaign,
+      blockchain: {
+        status: blockchainStatus,
+        id: campaign.blockchainId,
+        hasRecord: auditTrail.length > 0,
+      },
+      auditTrail,
+    };
   }
 
   /**
-   * Get all campaigns with pending verification (for auditor)
+   * Get all campaigns with pending verification (for moderator)
    */
   async findPendingVerifications(): Promise<CampaignDocument[]> {
     return this.campaignModel
