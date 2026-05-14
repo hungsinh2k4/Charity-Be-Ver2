@@ -4,7 +4,6 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import { CampaignsService } from '../campaigns/campaigns.service';
 import { DonationsService } from '../donations/donations.service';
 import { VerificationService } from '../verification/verification.service';
-import { BlockchainService } from '../blockchain/blockchain.service';
 import { Role } from '../../common/enums';
 
 @Injectable()
@@ -15,7 +14,6 @@ export class AdminService {
     private campaignsService: CampaignsService,
     private donationsService: DonationsService,
     private verificationService: VerificationService,
-    private blockchainService: BlockchainService,
   ) {}
 
   async getDashboardStats() {
@@ -49,26 +47,5 @@ export class AdminService {
 
   async updateUserRole(userId: string, role: Role) {
     return this.usersService.updateRole(userId, role);
-  }
-
-  async getOrganizationAudit(organizationId: string) {
-    return this.organizationsService.getAuditTrail(organizationId);
-  }
-
-  async getCampaignAudit(campaignId: string) {
-    return this.campaignsService.getAuditTrail(campaignId);
-  }
-
-  async getBlockchainSummary() {
-    const [organizations, campaigns] = await Promise.all([
-      this.blockchainService.getAllOrganizations(),
-      this.blockchainService.getAllCampaigns(),
-    ]);
-
-    return {
-      organizations: organizations.length,
-      campaigns: campaigns.length,
-      blockchainMode: process.env.BLOCKCHAIN_MODE || 'mock',
-    };
   }
 }

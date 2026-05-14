@@ -11,8 +11,10 @@ import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { DonationsModule } from './modules/donations/donations.module';
 import { VerificationModule } from './modules/verification/verification.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AuditorModule } from './modules/auditor/auditor.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { BlogsModule } from './modules/blogs/blogs.module';
+import { ModeratorModule } from './modules/moderator/moderator.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 
@@ -47,6 +49,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     DonationsModule,
     VerificationModule,
     AdminModule,
+    AuditorModule,
+    ModeratorModule,
     BlogsModule,
     UploadsModule,
     DashboardModule,

@@ -6,7 +6,6 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { CampaignsModule } from '../campaigns/campaigns.module';
 import { DonationsModule } from '../donations/donations.module';
 import { VerificationModule } from '../verification/verification.module';
-import { BlockchainModule } from '../blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -15,7 +14,6 @@ import { BlockchainModule } from '../blockchain/blockchain.module';
     CampaignsModule,
     DonationsModule,
     VerificationModule,
-    BlockchainModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

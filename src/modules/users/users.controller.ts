@@ -4,7 +4,6 @@ import {
   Post,
   Patch,
   Body,
-  Param,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -15,9 +14,8 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto, RequestUserVerificationDto } from './dto';
-import { JwtAuthGuard, RolesGuard } from '../auth/guards';
-import { CurrentUser, Roles } from '../auth/decorators';
-import { Role, VerificationStatus } from '../../common/enums';
+import { JwtAuthGuard } from '../auth/guards';
+import { CurrentUser } from '../auth/decorators';
 import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Users')
@@ -65,50 +63,5 @@ export class UsersController {
     @Body() dto: RequestUserVerificationDto,
   ) {
     return this.usersService.requestVerification(user.userId, dto);
-  }
-
-  // ==================== MODERATOR ENDPOINTS ====================
-
-  @Get('pending-verifications')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.MODERATOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Moderator] Get all users with pending verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns list of users pending verification',
-  })
-  async getPendingVerifications() {
-    return this.usersService.findPendingVerifications();
-  }
-
-  @Get(':id/verification-details')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.MODERATOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Moderator] Get user verification details including documents',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns user verification details',
-  })
-  async getVerificationDetails(@Param('id') id: string) {
-    return this.usersService.getVerificationDetails(id);
-  }
-
-  @Patch(':id/verification-status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.MODERATOR)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: '[Moderator] Approve or reject user verification' })
-  @ApiResponse({ status: 200, description: 'Verification status updated' })
-  async updateVerificationStatus(
-    @Param('id') id: string,
-    @Body('status') status: VerificationStatus,
-  ) {
-    return this.usersService.updateVerificationStatus(id, status);
   }
 }

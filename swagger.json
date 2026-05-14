@@ -138,84 +138,6 @@
         ]
       }
     },
-    "/users/pending-verifications": {
-      "get": {
-        "operationId": "UsersController_getPendingVerifications",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns list of users pending verification"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Get all users with pending verification",
-        "tags": [
-          "Users"
-        ]
-      }
-    },
-    "/users/{id}/verification-details": {
-      "get": {
-        "operationId": "UsersController_getVerificationDetails",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns user verification details"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Get user verification details including documents",
-        "tags": [
-          "Users"
-        ]
-      }
-    },
-    "/users/{id}/verification-status": {
-      "patch": {
-        "operationId": "UsersController_updateVerificationStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Verification status updated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Approve or reject user verification",
-        "tags": [
-          "Users"
-        ]
-      }
-    },
     "/organizations": {
       "post": {
         "operationId": "OrganizationsController_create",
@@ -277,26 +199,6 @@
           }
         ],
         "summary": "Get organizations created by current user",
-        "tags": [
-          "Organizations"
-        ]
-      }
-    },
-    "/organizations/pending-verifications": {
-      "get": {
-        "operationId": "OrganizationsController_getPendingVerifications",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns list of organizations pending verification"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Get all organizations with pending verification",
         "tags": [
           "Organizations"
         ]
@@ -434,59 +336,6 @@
         ]
       }
     },
-    "/organizations/{id}/verification-status": {
-      "patch": {
-        "operationId": "OrganizationsController_updateVerificationStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Verification status updated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Approve or reject organization verification",
-        "tags": [
-          "Organizations"
-        ]
-      }
-    },
-    "/organizations/{id}/audit": {
-      "get": {
-        "operationId": "OrganizationsController_getAuditTrail",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns blockchain audit history"
-          }
-        },
-        "summary": "Get organization blockchain audit trail",
-        "tags": [
-          "Organizations"
-        ]
-      }
-    },
     "/campaigns": {
       "post": {
         "operationId": "CampaignsController_create",
@@ -602,26 +451,6 @@
         ]
       }
     },
-    "/campaigns/pending-verifications": {
-      "get": {
-        "operationId": "CampaignsController_getPendingVerifications",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns list of campaigns pending verification"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Get all campaigns with pending verification",
-        "tags": [
-          "Campaigns"
-        ]
-      }
-    },
     "/campaigns/{id}": {
       "get": {
         "operationId": "CampaignsController_findOne",
@@ -711,59 +540,6 @@
           }
         ],
         "summary": "Delete campaign (soft delete, creator only)",
-        "tags": [
-          "Campaigns"
-        ]
-      }
-    },
-    "/campaigns/{id}/verification-status": {
-      "patch": {
-        "operationId": "CampaignsController_updateVerificationStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Campaign verification status updated"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "[Moderator] Approve or reject campaign verification",
-        "tags": [
-          "Campaigns"
-        ]
-      }
-    },
-    "/campaigns/{id}/audit": {
-      "get": {
-        "operationId": "CampaignsController_getAuditTrail",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns blockchain audit history"
-          }
-        },
-        "summary": "Get campaign blockchain audit trail",
         "tags": [
           "Campaigns"
         ]
@@ -1223,131 +999,6 @@
         ]
       }
     },
-    "/verification/requests": {
-      "get": {
-        "operationId": "VerificationController_findAll",
-        "parameters": [
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "PENDING",
-                "APPROVED",
-                "REJECTED"
-              ],
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns list of verification requests"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get all verification requests (Moderator/Auditor/Admin)",
-        "tags": [
-          "Verification"
-        ]
-      }
-    },
-    "/verification/requests/{id}": {
-      "get": {
-        "operationId": "VerificationController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns verification request details"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get verification request by ID (Moderator/Auditor/Admin)",
-        "tags": [
-          "Verification"
-        ]
-      }
-    },
-    "/verification/requests/{id}/process": {
-      "post": {
-        "operationId": "VerificationController_processRequest",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcessVerificationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Verification request processed"
-          },
-          "400": {
-            "description": "Request already processed"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Approve or reject a verification request (Moderator only)",
-        "tags": [
-          "Verification"
-        ]
-      }
-    },
-    "/verification/stats": {
-      "get": {
-        "operationId": "VerificationController_getStats",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns verification statistics"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get verification statistics (Moderator/Auditor/Admin)",
-        "tags": [
-          "Verification"
-        ]
-      }
-    },
     "/admin/dashboard": {
       "get": {
         "operationId": "AdminController_getDashboardStats",
@@ -1417,9 +1068,9 @@
         ]
       }
     },
-    "/admin/audit/organizations/{id}": {
+    "/auditor/audit/campaigns/{id}": {
       "get": {
-        "operationId": "AdminController_getOrganizationAudit",
+        "operationId": "AuditorController_getCampaignAudit",
         "parameters": [
           {
             "name": "id",
@@ -1432,7 +1083,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns blockchain audit trail"
+            "description": "Returns combined MongoDB and blockchain fundraising audit trail"
           }
         },
         "security": [
@@ -1440,15 +1091,15 @@
             "bearer": []
           }
         ],
-        "summary": "Get organization audit trail",
+        "summary": "Get campaign fundraising audit trail",
         "tags": [
-          "Admin"
+          "Auditor"
         ]
       }
     },
-    "/admin/audit/campaigns/{id}": {
+    "/auditor/audit/donations/{id}": {
       "get": {
-        "operationId": "AdminController_getCampaignAudit",
+        "operationId": "AuditorController_getDonationAudit",
         "parameters": [
           {
             "name": "id",
@@ -1461,7 +1112,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns blockchain audit trail"
+            "description": "Returns combined MongoDB and blockchain payment audit trail"
           }
         },
         "security": [
@@ -1469,19 +1120,124 @@
             "bearer": []
           }
         ],
-        "summary": "Get campaign audit trail",
+        "summary": "Get donation payment audit trail",
         "tags": [
-          "Admin"
+          "Auditor"
         ]
       }
     },
-    "/admin/blockchain/summary": {
+    "/moderator/verification/requests": {
       "get": {
-        "operationId": "AdminController_getBlockchainSummary",
+        "operationId": "ModeratorController_getVerificationRequests",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns verification requests"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all verification requests for moderation",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/verification/requests/{id}": {
+      "get": {
+        "operationId": "ModeratorController_getVerificationRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns verification request details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get verification request details for moderation",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/verification/requests/{id}/process": {
+      "post": {
+        "operationId": "ModeratorController_processVerificationRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessVerificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification request processed"
+          },
+          "400": {
+            "description": "Request already processed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a verification request",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/verification/stats": {
+      "get": {
+        "operationId": "ModeratorController_getVerificationStats",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns blockchain stats"
+            "description": "Returns verification statistics"
           }
         },
         "security": [
@@ -1489,9 +1245,98 @@
             "bearer": []
           }
         ],
-        "summary": "Get blockchain summary",
+        "summary": "Get verification statistics for moderation",
         "tags": [
-          "Admin"
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/users/pending-verifications": {
+      "get": {
+        "operationId": "ModeratorController_getPendingUserVerifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns users pending verification"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get users pending verification",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/users/{id}/verification-details": {
+      "get": {
+        "operationId": "ModeratorController_getUserVerificationDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns user verification details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get user verification details",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/organizations/pending-verifications": {
+      "get": {
+        "operationId": "ModeratorController_getPendingOrganizationVerifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns organizations pending verification"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get organizations pending verification",
+        "tags": [
+          "Moderator"
+        ]
+      }
+    },
+    "/moderator/campaigns/pending-verifications": {
+      "get": {
+        "operationId": "ModeratorController_getPendingCampaignVerifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns campaigns pending verification"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get campaigns pending verification",
+        "tags": [
+          "Moderator"
         ]
       }
     },

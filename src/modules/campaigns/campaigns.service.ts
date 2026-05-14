@@ -237,10 +237,36 @@ export class CampaignsService {
 
   async getAuditTrail(id: string) {
     const campaign = await this.findById(id);
+    const blockchainStatus = this.blockchainService.getStatus();
+
     if (!campaign.blockchainId) {
-      return { message: 'No blockchain record available' };
+      return {
+        entityType: 'campaign',
+        mongoRecord: campaign,
+        blockchain: {
+          status: blockchainStatus,
+          id: null,
+          hasRecord: false,
+        },
+        auditTrail: [],
+        message: 'No blockchain record available',
+      };
     }
-    return this.blockchainService.getCampaignHistory(campaign.blockchainId);
+
+    const auditTrail = await this.blockchainService.getCampaignHistory(
+      campaign.blockchainId,
+    );
+
+    return {
+      entityType: 'campaign',
+      mongoRecord: campaign,
+      blockchain: {
+        status: blockchainStatus,
+        id: campaign.blockchainId,
+        hasRecord: auditTrail.length > 0,
+      },
+      auditTrail,
+    };
   }
 
   /**

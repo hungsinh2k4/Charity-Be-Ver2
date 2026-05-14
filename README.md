@@ -205,9 +205,6 @@ npm run swagger:generate
 | GET | `/users/me` | JWT |
 | PATCH | `/users/me` | JWT |
 | POST | `/users/request-verification` | JWT, body `documents: string[]` |
-| GET | `/users/pending-verifications` | MODERATOR |
-| GET | `/users/:id/verification-details` | MODERATOR |
-| PATCH | `/users/:id/verification-status` | MODERATOR |
 
 ### Uploads
 
@@ -234,9 +231,6 @@ npm run swagger:generate
 | PATCH | `/organizations/:id` | Owner |
 | DELETE | `/organizations/:id` | Owner |
 | POST | `/organizations/:id/request-verification` | Owner |
-| GET | `/organizations/pending-verifications` | MODERATOR |
-| PATCH | `/organizations/:id/verification-status` | MODERATOR |
-| GET | `/organizations/:id/audit` | Public |
 
 ### Campaigns
 
@@ -248,9 +242,6 @@ npm run swagger:generate
 | GET | `/campaigns/:id` | Public |
 | PATCH | `/campaigns/:id` | Creator |
 | DELETE | `/campaigns/:id` | Creator |
-| GET | `/campaigns/pending-verifications` | MODERATOR |
-| PATCH | `/campaigns/:id/verification-status` | MODERATOR |
-| GET | `/campaigns/:id/audit` | Public |
 
 ### Donations
 
@@ -273,10 +264,28 @@ npm run swagger:generate
 | Method | Endpoint | Auth |
 | --- | --- | --- |
 | POST | `/verification/request` | JWT |
-| GET | `/verification/requests` | MODERATOR / AUDITOR / ADMIN |
-| GET | `/verification/requests/:id` | MODERATOR / AUDITOR / ADMIN |
-| POST | `/verification/requests/:id/process` | MODERATOR |
-| GET | `/verification/stats` | MODERATOR / AUDITOR / ADMIN |
+
+### Moderator
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/moderator/verification/requests` | MODERATOR |
+| GET | `/moderator/verification/requests/:id` | MODERATOR |
+| POST | `/moderator/verification/requests/:id/process` | MODERATOR |
+| GET | `/moderator/verification/stats` | MODERATOR |
+| GET | `/moderator/users/pending-verifications` | MODERATOR |
+| GET | `/moderator/users/:id/verification-details` | MODERATOR |
+| GET | `/moderator/organizations/pending-verifications` | MODERATOR |
+| GET | `/moderator/campaigns/pending-verifications` | MODERATOR |
+
+### Auditor
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| GET | `/auditor/audit/campaigns/:id` | AUDITOR / ADMIN |
+| GET | `/auditor/audit/donations/:id` | AUDITOR / ADMIN |
+
+Auditor chỉ truy vết nghiệp vụ tiền: campaign gây quỹ và donation đã thanh toán. Audit endpoints return a combined trace response: the MongoDB record, the stored blockchain identifier, blockchain connection status, and the history read back through `BlockchainService`.
 
 ### Admin
 
@@ -285,9 +294,6 @@ npm run swagger:generate
 | GET | `/admin/dashboard` | ADMIN |
 | GET | `/admin/users` | ADMIN |
 | PATCH | `/admin/users/:id/role` | ADMIN |
-| GET | `/admin/audit/organizations/:id` | ADMIN / AUDITOR |
-| GET | `/admin/audit/campaigns/:id` | ADMIN / AUDITOR |
-| GET | `/admin/blockchain/summary` | ADMIN / AUDITOR |
 
 ## Seed Data
 

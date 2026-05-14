@@ -18,9 +18,9 @@ import {
 } from '@nestjs/swagger';
 import { CampaignsService } from './campaigns.service';
 import { CreateCampaignDto, UpdateCampaignDto } from './dto';
-import { JwtAuthGuard, VerifiedUserGuard, RolesGuard } from '../auth/guards';
-import { CurrentUser, Roles } from '../auth/decorators';
-import { VerificationStatus, Role } from '../../common/enums';
+import { JwtAuthGuard, VerifiedUserGuard } from '../auth/guards';
+import { CurrentUser } from '../auth/decorators';
+import { VerificationStatus } from '../../common/enums';
 import type { AuthenticatedUser } from '../auth/interfaces';
 
 @ApiTags('Campaigns')
@@ -86,23 +86,6 @@ export class CampaignsController {
     return this.campaignsService.findByCreator(user.userId);
   }
 
-  // ==================== MODERATOR ENDPOINTS ====================
-
-  @Get('pending-verifications')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.MODERATOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Moderator] Get all campaigns with pending verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns list of campaigns pending verification',
-  })
-  async getPendingVerifications() {
-    return this.campaignsService.findPendingVerifications();
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get campaign by ID' })
   @ApiResponse({ status: 200, description: 'Returns campaign details' })
@@ -140,33 +123,4 @@ export class CampaignsController {
     return this.campaignsService.softDelete(id, user.userId);
   }
 
-  @Patch(':id/verification-status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.MODERATOR)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: '[Moderator] Approve or reject campaign verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Campaign verification status updated',
-  })
-  async updateVerificationStatus(
-    @Param('id') id: string,
-    @Body('status') status: VerificationStatus,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
-    return this.campaignsService.updateVerificationStatus(
-      id,
-      status,
-      user.userId,
-    );
-  }
-
-  @Get(':id/audit')
-  @ApiOperation({ summary: 'Get campaign blockchain audit trail' })
-  @ApiResponse({ status: 200, description: 'Returns blockchain audit history' })
-  async getAuditTrail(@Param('id') id: string) {
-    return this.campaignsService.getAuditTrail(id);
-  }
 }

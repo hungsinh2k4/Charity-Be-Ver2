@@ -24,6 +24,18 @@ export class DonationsService {
     return donation;
   }
 
+  async findByIdWithRelations(id: string): Promise<DonationDocument> {
+    const donation = await this.donationModel
+      .findById(id)
+      .populate('campaignId', 'title goalAmount currentAmount blockchainId')
+      .populate('organizationId', 'name blockchainId')
+      .populate('userId', 'name email')
+      .exec();
+
+    if (!donation) throw new NotFoundException('Donation not found');
+    return donation;
+  }
+
   async findByTransferCode(transferCode: string): Promise<DonationDocument> {
     const donation = await this.donationModel
       .findOne({ transferCode: transferCode.toUpperCase() })
@@ -68,6 +80,40 @@ export class DonationsService {
   async verifyOnBlockchain(id: string) {
     const donation = await this.findById(id);
     return this.blockchainService.getDonationHistory(donation.blockchainTxId);
+  }
+
+  async getAuditTrail(id: string) {
+    const donation = await this.findByIdWithRelations(id);
+    const blockchainStatus = this.blockchainService.getStatus();
+
+    if (!donation.blockchainTxId) {
+      return {
+        entityType: 'donation',
+        mongoRecord: donation,
+        blockchain: {
+          status: blockchainStatus,
+          id: null,
+          hasRecord: false,
+        },
+        auditTrail: [],
+        message: 'No blockchain record available',
+      };
+    }
+
+    const auditTrail = await this.blockchainService.getDonationHistory(
+      donation.blockchainTxId,
+    );
+
+    return {
+      entityType: 'donation',
+      mongoRecord: donation,
+      blockchain: {
+        status: blockchainStatus,
+        id: donation.blockchainTxId,
+        hasRecord: auditTrail.length > 0,
+      },
+      auditTrail,
+    };
   }
 
   async getStats(campaignId?: string) {
